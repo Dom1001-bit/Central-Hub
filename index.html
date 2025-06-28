@@ -19,24 +19,35 @@
         .favorite-btn.favorited svg { fill: #facc15; stroke: #facc15; }
         .card-actions { opacity: 0; transition: opacity 0.2s ease-in-out; }
         .project-card:hover .card-actions { opacity: 1; }
+        #auth-screen, #app-container { display: none; } /* Hidden by default */
     </style>
 </head>
 <body class="animated-gradient text-gray-200">
 
-    <!-- Main Container -->
-    <div class="container mx-auto px-4 py-8 md:py-12">
+    <!-- Auth Screen -->
+    <div id="auth-screen" class="min-h-screen flex flex-col items-center justify-center">
+        <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-24 mb-8" onerror="this.style.display='none'">
+        <h1 class="text-4xl font-bold text-white mb-4">Welcome to the Central Hub</h1>
+        <p class="text-gray-400 mb-8">Please sign in to continue.</p>
+        <button id="sign-in-btn" class="bg-white text-gray-800 font-semibold py-3 px-6 rounded-lg flex items-center space-x-2 hover:bg-gray-200 transition-colors">
+            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.574l6.19 5.238C42.012 35.836 44 30.138 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+            <span>Sign in with Google</span>
+        </button>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app-container" class="container mx-auto px-4 py-8 md:py-12">
         <header class="relative text-center mb-12">
-            <div class="flex justify-center mb-8">
+            <div class="flex justify-center items-center mb-8">
                 <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-24" onerror="this.style.display='none'">
+                <div id="user-info" class="absolute top-0 right-0 flex items-center space-x-4"></div>
             </div>
             <h1 class="text-4xl md:text-5xl font-bold text-white">Central Hub</h1>
             <p class="mt-4 text-lg text-gray-400">A directory for all deployed Web Apps, Tools, and System Files.</p>
-            
-            <button id="add-project-btn" class="absolute top-0 right-0 mt-2 mr-2 bg-blue-500 hover:bg-blue-600 text-white font-bold p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            <button id="add-project-btn" class="hidden absolute top-0 left-0 mt-2 ml-2 bg-blue-500 hover:bg-blue-600 text-white font-bold p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             </button>
         </header>
-
         <div class="mb-12 px-4 md:px-0">
             <div class="max-w-3xl mx-auto">
                 <div class="relative mb-6">
@@ -48,13 +59,11 @@
                 <div id="filter-buttons" class="flex justify-center items-center space-x-2 flex-wrap pt-6"></div>
             </div>
         </div>
-
         <main id="main-content">
             <div id="loading-indicator" class="text-center">
-                <p class="text-lg text-gray-400">Connecting to database...</p>
+                <p class="text-lg text-gray-400">Awaiting sign-in...</p>
             </div>
         </main>
-        
         <footer class="text-center mt-16 text-gray-500/80">
             <p>Powered by Firebase. All data is live.</p>
         </footer>
@@ -66,7 +75,12 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        // --- IMPORTANT: ADD YOUR ADMIN UID HERE ---
+        // After you sign in for the first time, get your UID from the browser's developer console and paste it here.
+        const ADMIN_UID = 'YOUR_ADMIN_UID_HERE';
 
         const firebaseConfig = {
           apiKey: "AIzaSyDcmhelshx4KWM1yeiBmo9a9VbXGJZbWQ0",
@@ -78,6 +92,7 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
         const projectsCollection = collection(db, "projects");
 
@@ -88,14 +103,20 @@
         const projectFormModalEl = document.getElementById('project-form-modal');
         const addProjectBtn = document.getElementById('add-project-btn');
         const loadingIndicator = document.getElementById('loading-indicator');
-
+        const authScreen = document.getElementById('auth-screen');
+        const appContainer = document.getElementById('app-container');
+        const signInBtn = document.getElementById('sign-in-btn');
+        const userInfoEl = document.getElementById('user-info');
+        
         let allProjects = [];
         let activeFilter = 'All';
+        let isAdmin = false;
         let favorites = JSON.parse(localStorage.getItem('favoriteProjects') || '[]');
         let recent = JSON.parse(localStorage.getItem('recentlyUsedProjects') || '[]');
         const saveFavorites = () => localStorage.setItem('favoriteProjects', JSON.stringify(favorites));
         const saveRecent = () => localStorage.setItem('recentlyUsedProjects', JSON.stringify(recent));
 
+        // ... (seedData array remains the same)
         const seedData = [
              { type: 'webapp', title: "Supplier Inventory Database", description: "Manage, search, and track all supplier's prices and inventory for all products.", url: "https://script.google.com/macros/s/AKfycbyiG9GtihUBDAbH2-rj3FJv70x2P4yUa4aYhJUOfMOFQLV8X8qxehX9WkdTPHwueODI/exec", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M20 17.58A5 5 0 0 0 15 12.5a5 5 0 0 0-5-5H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h11.42a5 5 0 0 0 4.58-7.42z"/><path d="M12 12.5a2.5 2.5 0 0 1 0 5"/><path d="M12 7.5a2.5 2.5 0 0 1 0 5"/></svg>`, bgColor: 'bg-blue-200', category: 'Web Apps'},
             { type: 'webapp', title: "Master Product Database", description: "Centralized database for all product SKUs, details, and specifications.", url: "https://dom1001-bit.github.io/UPC-lookup-item/", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="M12 22.08V12"/></svg>`, bgColor: 'bg-green-200', category: 'Web Apps'},
@@ -110,7 +131,7 @@
             { type: 'folder', title: "Authorization Letter Template", description: "Template for official authorization letters.", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>`, bgColor: 'bg-purple-200', category: 'System Files', files: [ { title: "Main Folder", url: "https://drive.google.com/drive/folders/11uedUzWVPQTKcVGX4HLvCyO7MF93Ir46?usp=drive_link" }, ] },
             { type: 'folder', title: "Products", description: "General folder for all product-related assets and documents.", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>`, bgColor: 'bg-yellow-200', category: 'System Files', files: [ { title: "Main Folder", url: "https://drive.google.com/drive/folders/1IHWzdfGcKWHBN9_TwGPpAgqrH7b1xa-E?usp=drive_link" }, ] },
         ];
-
+        
         async function seedDatabaseIfEmpty() {
             try {
                 const snapshot = await getDocs(projectsCollection);
@@ -132,14 +153,52 @@
             }
         }
 
-        onSnapshot(projectsCollection, (snapshot) => {
-            allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            loadingIndicator.style.display = 'none';
-            renderAll();
-        }, (error) => {
-            console.error("Error with real-time listener:", error);
-            loadingIndicator.style.display = 'none';
-            mainContent.innerHTML = `<p class="text-red-400 text-center">Failed to listen to database changes. Please check your connection and Firebase rules.</p>`;
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                // User is signed in
+                console.log("User signed in:", user.displayName, user.uid);
+                console.log("IMPORTANT: If you are the admin, copy this UID and paste it into the ADMIN_UID constant and your Firestore Rules:", user.uid);
+                
+                isAdmin = user.uid === ADMIN_UID;
+                
+                authScreen.style.display = 'none';
+                appContainer.style.display = 'block';
+
+                userInfoEl.innerHTML = `
+                    <img src="${user.photoURL}" alt="${user.displayName}" class="h-10 w-10 rounded-full">
+                    <button id="sign-out-btn" class="text-sm text-gray-400 hover:text-white">Sign Out</button>
+                `;
+                document.getElementById('sign-out-btn').addEventListener('click', () => signOut(auth));
+                
+                if (isAdmin) {
+                    addProjectBtn.classList.remove('hidden');
+                }
+
+                // Start listening to data only after user is authenticated
+                onSnapshot(projectsCollection, (snapshot) => {
+                    allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    loadingIndicator.style.display = 'none';
+                    renderAll();
+                }, (error) => {
+                    console.error("Error with real-time listener:", error);
+                    loadingIndicator.style.display = 'none';
+                    mainContent.innerHTML = `<p class="text-red-400 text-center">Failed to listen to database changes. Please check your connection and Firebase rules.</p>`;
+                });
+
+            } else {
+                // User is signed out
+                isAdmin = false;
+                authScreen.style.display = 'flex';
+                appContainer.style.display = 'none';
+            }
+        });
+
+        signInBtn.addEventListener('click', () => {
+            const provider = new GoogleAuthProvider();
+            signInWithPopup(auth, provider).catch(error => {
+                console.error("Sign in error", error);
+                alert("Could not sign in. Please check the console for details.");
+            });
         });
         
         function renderAll() {
@@ -168,7 +227,12 @@
 
         function createSection(category) {
             const sectionId = `section-${category.replace(/\s+/g, '-')}`;
-            if(document.getElementById(sectionId)) return;
+            if(document.getElementById(sectionId)) {
+                // Clear grid content if section already exists, to prevent duplication
+                const grid = document.querySelector(`#${sectionId} > div`);
+                if(grid) grid.innerHTML = '';
+                return;
+            };
             const section = document.createElement('div');
             section.id = sectionId;
             section.className = 'mb-12 project-section';
@@ -182,6 +246,7 @@
         function populateGrid(category, items) {
             const sectionId = `section-${category.replace(/\s+/g, '-')}`;
             const section = document.getElementById(sectionId);
+            if (!section) return;
             const grid = section.querySelector('div');
             grid.innerHTML = '';
 
@@ -192,9 +257,9 @@
                     section.classList.add('section-hidden');
                     return;
                 }
+            } else {
+                 section.classList.remove('section-hidden');
             }
-            
-            section.classList.remove('section-hidden');
             
             items.forEach((item, index) => {
                 const card = createCard(item);
@@ -215,14 +280,15 @@
             const isFavorited = favorites.includes(project.id);
             
             card.innerHTML = `
-                <div class="relative">
-                    <div class="card-content flex items-start space-x-4 cursor-pointer">
+                <div class="relative h-full flex flex-col">
+                    <div class="card-content flex-grow flex items-start space-x-4 cursor-pointer">
                         <div class="flex-shrink-0 w-16 h-16 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg">${project.icon || ''}</div>
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-white">${project.title}</h3>
                             <p class="mt-2 text-gray-300/80">${project.description}</p>
                         </div>
                     </div>
+                    ${ isAdmin ? `
                     <div class="card-actions absolute top-[-10px] right-[-10px] flex space-x-1">
                         <button class="favorite-btn p-2 rounded-full bg-gray-700/80 hover:bg-gray-600/80 transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite">
                             <svg class="h-4 w-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -233,7 +299,13 @@
                         <button class="delete-btn p-2 rounded-full bg-red-500/80 hover:bg-red-600/80 transition-colors" title="Delete">
                              <svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         </button>
+                    </div>` : `
+                    <div class="card-actions absolute top-[-10px] right-[-10px] flex space-x-1">
+                         <button class="favorite-btn p-2 rounded-full bg-gray-700/80 hover:bg-gray-600/80 transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite">
+                            <svg class="h-4 w-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </button>
                     </div>
+                    ` }
                 </div>
             `;
             return card;
@@ -270,11 +342,11 @@
                 }
 
                 const hasVisibleCards = section.querySelectorAll('.project-card:not(.card-hidden)').length > 0;
-                section.classList.toggle('section-hidden', !hasVisibleCards && !isDynamicSection);
-
-                if (isDynamicSection && activeFilter !== 'All') {
-                    section.classList.add('section-hidden');
-                }
+                 if( isDynamicSection ) {
+                    section.classList.toggle('section-hidden', !hasVisibleCards || activeFilter !== 'All');
+                 } else {
+                    section.classList.toggle('section-hidden', !hasVisibleCards);
+                 }
             });
         }
         
@@ -465,4 +537,4 @@
 
     </script>
 </body>
-</html>
+</ht
