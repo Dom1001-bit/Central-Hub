@@ -32,13 +32,11 @@
             <h1 class="text-4xl md:text-5xl font-bold text-white">Central Hub</h1>
             <p class="mt-4 text-lg text-gray-400">A directory for all deployed Web Apps, Tools, and System Files.</p>
             
-            <!-- Add New Project Button -->
-            <button id="add-project-btn" class="absolute top-0 right-0 mt-2 mr-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            <button id="add-project-btn" class="absolute top-0 right-0 mt-2 mr-2 bg-blue-500 hover:bg-blue-600 text-white font-bold p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             </button>
         </header>
 
-        <!-- Search and Filter Controls -->
         <div class="mb-12 px-4 md:px-0">
             <div class="max-w-3xl mx-auto">
                 <div class="relative mb-6">
@@ -52,7 +50,6 @@
         </div>
 
         <main id="main-content">
-            <!-- Loading Indicator -->
             <div id="loading-indicator" class="text-center">
                 <p class="text-lg text-gray-400">Connecting to database...</p>
             </div>
@@ -63,17 +60,14 @@
         </footer>
     </div>
 
-    <!-- Modals (File List and Add/Edit Project) -->
+    <!-- Modals -->
     <div id="file-list-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
     <div id="project-form-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
 
-    <!-- Firebase SDK -->
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // --- PASTE YOUR FIREBASE CONFIG HERE ---
         const firebaseConfig = {
           apiKey: "AIzaSyDcmhelshx4KWM1yeiBmo9a9VbXGJZbWQ0",
           authDomain: "central-hub-directory.firebaseapp.com",
@@ -83,12 +77,10 @@
           appId: "1:962198640193:web:19e50b3fc71ce4d1bc18c0"
         };
 
-        // --- INITIALIZE FIREBASE & FIRESTORE ---
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const projectsCollection = collection(db, "projects");
 
-        // --- DOM ELEMENTS ---
         const mainContent = document.getElementById('main-content');
         const searchInput = document.getElementById('search-input');
         const filterButtonsContainer = document.getElementById('filter-buttons');
@@ -97,15 +89,15 @@
         const addProjectBtn = document.getElementById('add-project-btn');
         const loadingIndicator = document.getElementById('loading-indicator');
 
-        // --- LOCAL STATE ---
         let allProjects = [];
         let activeFilter = 'All';
         let favorites = JSON.parse(localStorage.getItem('favoriteProjects') || '[]');
         let recent = JSON.parse(localStorage.getItem('recentlyUsedProjects') || '[]');
+        const saveFavorites = () => localStorage.setItem('favoriteProjects', JSON.stringify(favorites));
+        const saveRecent = () => localStorage.setItem('recentlyUsedProjects', JSON.stringify(recent));
 
-        // --- DATA SEEDING (RUNS ONLY ONCE IF DATABASE IS EMPTY) ---
         const seedData = [
-            { type: 'webapp', title: "Supplier Inventory Database", description: "Manage, search, and track all supplier's prices and inventory for all products.", url: "https://script.google.com/macros/s/AKfycbyiG9GtihUBDAbH2-rj3FJv70x2P4yUa4aYhJUOfMOFQLV8X8qxehX9WkdTPHwueODI/exec", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M20 17.58A5 5 0 0 0 15 12.5a5 5 0 0 0-5-5H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h11.42a5 5 0 0 0 4.58-7.42z"/><path d="M12 12.5a2.5 2.5 0 0 1 0 5"/><path d="M12 7.5a2.5 2.5 0 0 1 0 5"/></svg>`, bgColor: 'bg-blue-200', category: 'Web Apps'},
+             { type: 'webapp', title: "Supplier Inventory Database", description: "Manage, search, and track all supplier's prices and inventory for all products.", url: "https://script.google.com/macros/s/AKfycbyiG9GtihUBDAbH2-rj3FJv70x2P4yUa4aYhJUOfMOFQLV8X8qxehX9WkdTPHwueODI/exec", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M20 17.58A5 5 0 0 0 15 12.5a5 5 0 0 0-5-5H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h11.42a5 5 0 0 0 4.58-7.42z"/><path d="M12 12.5a2.5 2.5 0 0 1 0 5"/><path d="M12 7.5a2.5 2.5 0 0 1 0 5"/></svg>`, bgColor: 'bg-blue-200', category: 'Web Apps'},
             { type: 'webapp', title: "Master Product Database", description: "Centralized database for all product SKUs, details, and specifications.", url: "https://dom1001-bit.github.io/UPC-lookup-item/", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="M12 22.08V12"/></svg>`, bgColor: 'bg-green-200', category: 'Web Apps'},
             { type: 'webapp', title: "Inventory Forecast", description: "Predict future stock needs based on historical sales and trend data.", url: "https://script.google.com/macros/s/AKfycbz2IiaCjBtEc9obRu3aZ1NhrMmzDIpY0BHbWOYfJiTqGCWAE_6QCsrbsfu310bYzQ4K/exec", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>`, bgColor: 'bg-indigo-200', category: 'Web Apps'},
             { type: 'webapp', title: "Sales Dashboard", description: "Visualize sales performance with interactive charts and key metrics.", url: "https://script.google.com/macros/s/AKfycbxB85fjK0NVWjG9fMD5q9Exzfyyjpg0V4eZ-i6egHK8WXwaH7-BhzAcJZuGOmiJVhBNDQ/exec", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M3 3v18h18"/><path d="M18 17v-6"/><path d="M13 17V7"/><path d="M8 17v-4"/></svg>`, bgColor: 'bg-red-200', category: 'Web Apps'},
@@ -120,52 +112,60 @@
         ];
 
         async function seedDatabaseIfEmpty() {
-            const snapshot = await getDocs(projectsCollection);
-            if (snapshot.empty) {
-                console.log("Database is empty. Seeding with initial data...");
-                const batch = writeBatch(db);
-                seedData.forEach(project => {
-                    const docRef = doc(projectsCollection); // Automatically generate ID
-                    batch.set(docRef, project);
-                });
-                await batch.commit();
-                console.log("Seeding complete.");
-            } else {
-                console.log("Database already contains data. Skipping seed.");
+            try {
+                const snapshot = await getDocs(projectsCollection);
+                if (snapshot.empty) {
+                    console.log("Database is empty. Seeding with initial data...");
+                    const batch = writeBatch(db);
+                    seedData.forEach(project => {
+                        const docRef = doc(projectsCollection);
+                        batch.set(docRef, project);
+                    });
+                    await batch.commit();
+                    console.log("Seeding complete.");
+                } else {
+                    console.log("Database already contains data. Skipping seed.");
+                }
+            } catch (error) {
+                console.error("Error seeding database:", error);
+                mainContent.innerHTML = `<p class="text-red-400 text-center">Error connecting to the database. Please check your Firebase setup and security rules.</p>`;
             }
         }
 
-        // --- REAL-TIME DATA LISTENER ---
         onSnapshot(projectsCollection, (snapshot) => {
             allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             loadingIndicator.style.display = 'none';
             renderAll();
+        }, (error) => {
+            console.error("Error with real-time listener:", error);
+            loadingIndicator.style.display = 'none';
+            mainContent.innerHTML = `<p class="text-red-400 text-center">Failed to listen to database changes. Please check your connection and Firebase rules.</p>`;
         });
         
-        // --- RENDER & UI FUNCTIONS (Full implementation is required) ---
         function renderAll() {
-             // This is a placeholder for the full render logic which is complex
-             // In a real implementation this would call createSection, populateGrid etc.
-             mainContent.innerHTML = '<!-- RENDERED CONTENT WOULD GO HERE -->';
-             console.log("RenderAll called. Projects count:", allProjects.length);
-             // A simplified render for demonstration
-             renderFilterButtons();
-             mainContent.innerHTML = ''; // Clear content
-             const categories = ['Favorites', 'Recently Used', ...new Set(allProjects.map(p => p.category))];
-             categories.forEach(createSection);
-             const projectMap = new Map(allProjects.map(p => [p.title, p]));
-             const favoriteProjects = favorites.map(title => projectMap.get(title)).filter(Boolean);
-             populateGrid('Favorites', favoriteProjects);
-             const recentProjects = recent.map(title => projectMap.get(title)).filter(Boolean);
-             populateGrid('Recently Used', recentProjects);
-             const mainCategories = new Set(allProjects.map(p => p.category));
-             mainCategories.forEach(category => {
+            mainContent.innerHTML = '';
+            const allDynamicCategories = ['Favorites', 'Recently Used'];
+            const staticCategories = [...new Set(allProjects.map(p => p.category))];
+            
+            [...allDynamicCategories, ...staticCategories].forEach(createSection);
+            
+            const projectMap = new Map(allProjects.map(p => [p.id, p]));
+
+            const favoriteProjects = favorites.map(id => projectMap.get(id)).filter(Boolean);
+            populateGrid('Favorites', favoriteProjects);
+            
+            const recentProjects = recent.map(id => projectMap.get(id)).filter(Boolean);
+            populateGrid('Recently Used', recentProjects);
+
+            staticCategories.forEach(category => {
                 const categoryProjects = allProjects.filter(p => p.category === category);
                 populateGrid(category, categoryProjects);
-             });
-             filterAndSearch();
+            });
+            
+            renderFilterButtons();
+            filterAndSearch();
         }
-        function filterAndSearch() { /* ... Full filter logic ... */ }
+
         function createSection(category) {
             const sectionId = `section-${category.replace(/\s+/g, '-')}`;
             if(document.getElementById(sectionId)) return;
@@ -178,40 +178,278 @@
             `;
             mainContent.appendChild(section);
         }
+
         function populateGrid(category, items) {
-            const grid = document.querySelector(`#section-${category.replace(/\s+/g, '-')} > div`);
-            if (!grid) return;
+            const sectionId = `section-${category.replace(/\s+/g, '-')}`;
+            const section = document.getElementById(sectionId);
+            const grid = section.querySelector('div');
             grid.innerHTML = '';
+
             if (items.length === 0) {
-                 document.getElementById(`section-${category.replace(/\s+/g, '-')}`).classList.add('section-hidden');
-                 return;
+                section.classList.add('section-hidden');
+                return;
             }
-            document.getElementById(`section-${category.replace(/\s+/g, '-')}`).classList.remove('section-hidden');
-            items.forEach(item => {
+            section.classList.remove('section-hidden');
+            
+            items.forEach((item, index) => {
                 const card = createCard(item);
+                card.style.transitionDelay = `${index * 30}ms`;
                 grid.appendChild(card);
+                setTimeout(() => card.classList.remove('card-enter'), 50);
             });
         }
+
         function createCard(project) {
             const card = document.createElement('div');
-            card.className = 'project-card block p-6 rounded-xl border bg-gray-200/5 backdrop-blur-lg border-gray-100/10 shadow-lg hover:shadow-black/20 transition-all duration-300 ease-in-out hover:-translate-y-1.5';
+            card.className = 'project-card card-enter block p-6 rounded-xl border bg-gray-200/5 backdrop-blur-lg border-gray-100/10 shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1.5';
             card.dataset.id = project.id;
-            // Simplified card innerHTML for brevity
-            card.innerHTML = `<div class="card-content cursor-pointer">...</div><div class="card-actions">...</div>`;
+            card.dataset.title = project.title.toLowerCase();
+            card.dataset.description = project.description.toLowerCase();
+            card.dataset.category = project.category;
+
+            const isFavorited = favorites.includes(project.id);
+            
+            card.innerHTML = `
+                <div class="relative">
+                    <div class="card-content flex items-start space-x-4 cursor-pointer">
+                        <div class="flex-shrink-0 w-16 h-16 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg">${project.icon || ''}</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white">${project.title}</h3>
+                            <p class="mt-2 text-gray-300/80">${project.description}</p>
+                        </div>
+                    </div>
+                    <div class="card-actions absolute top-[-10px] right-[-10px] flex space-x-1">
+                        <button class="favorite-btn p-2 rounded-full bg-gray-700/80 hover:bg-gray-600/80 transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite">
+                            <svg class="h-4 w-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </button>
+                        <button class="edit-btn p-2 rounded-full bg-gray-700/80 hover:bg-gray-600/80 transition-colors" title="Edit">
+                            <svg class="h-4 w-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </button>
+                        <button class="delete-btn p-2 rounded-full bg-red-500/80 hover:bg-red-600/80 transition-colors" title="Delete">
+                             <svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
             return card;
         }
-        function renderFilterButtons() { /* ... */ }
 
+        function renderFilterButtons() {
+            const categories = ['All', ...new Set(allProjects.map(p => p.category))];
+            filterButtonsContainer.innerHTML = categories.map(cat => `<button data-category="${cat}" class="filter-btn px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${cat === activeFilter ? 'bg-blue-500 text-white' : 'bg-gray-700/60 text-gray-300 hover:bg-gray-600/80'}">${cat}</button>`).join('');
+        }
         
-        // --- MODAL & FORM HANDLING ---
-        function showProjectForm(project = {}) { /* ... Logic to show add/edit modal ... */ }
-        function showFileList(project) { /* ... Logic to show file list modal ... */ }
+        function filterAndSearch() {
+            const searchTerm = searchInput.value.toLowerCase();
+            allProjects.forEach(project => {
+                const card = document.querySelector(`.project-card[data-id="${project.id}"]`);
+                if(!card) return;
+
+                const titleMatch = project.title.toLowerCase().includes(searchTerm);
+                const descMatch = project.description.toLowerCase().includes(searchTerm);
+                const categoryMatch = activeFilter === 'All' || project.category === activeFilter;
+                
+                if((titleMatch || descMatch) && categoryMatch) {
+                    card.classList.remove('card-hidden');
+                } else {
+                    card.classList.add('card-hidden');
+                }
+            });
+            updateSectionVisibility();
+        }
+
+        function updateSectionVisibility() {
+            document.querySelectorAll('.project-section').forEach(section => {
+                const hasVisibleCards = section.querySelectorAll('.project-card:not(.card-hidden)').length > 0;
+                section.classList.toggle('section-hidden', !hasVisibleCards);
+            });
+        }
         
-        // --- CRUD OPERATIONS ---
-        async function handleFormSubmit(event) { /* ... Logic for add/update ... */ }
-        async function handleDelete(projectId) { /* ... Logic for delete ... */ }
+        function showFileList(project) {
+            const filesHTML = project.files && project.files.length > 0
+                ? project.files.map(file => `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer" class="block p-3 rounded-lg text-white hover:bg-white/10 transition-colors duration-200">${file.title}</a></li>`).join('')
+                : `<li class="p-3 text-gray-400">No files listed for this folder.</li>`;
+            
+            fileListModalEl.innerHTML = `
+                <div class="modal-content w-full max-w-md bg-gray-800/50 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-100/10 p-6 transform scale-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold text-white">${project.title}</h3>
+                        <button class="close-modal-btn text-gray-400 hover:text-white transition-colors text-3xl font-light">&times;</button>
+                    </div>
+                    <ul class="space-y-2 max-h-80 overflow-y-auto">${filesHTML}</ul>
+                </div>`;
+            fileListModalEl.classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function showProjectForm(project = {}) {
+            const isEditing = !!project.id;
+            const files = project.files || [];
+            const filesHTML = files.map((file, index) => `
+                <div class="flex items-center space-x-2" data-file-index="${index}">
+                    <input type="text" placeholder="File Name" value="${file.title}" class="file-title-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="url" placeholder="File URL" value="${file.url}" class="file-url-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="button" class="remove-file-btn text-red-500 hover:text-red-400">&times;</button>
+                </div>
+            `).join('');
+
+            projectFormModalEl.innerHTML = `
+                <div class="modal-content w-full max-w-lg bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-100/10 p-6 transform scale-100">
+                    <form id="project-form">
+                        <h3 class="text-2xl font-bold text-white mb-6">${isEditing ? 'Edit Project' : 'Add New Project'}</h3>
+                        <div class="space-y-4">
+                            <input type="hidden" name="id" value="${project.id || ''}">
+                            <input type="text" name="title" placeholder="Project Title" value="${project.title || ''}" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <textarea name="description" placeholder="Description" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">${project.description || ''}</textarea>
+                            <select name="type" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="webapp" ${project.type === 'webapp' ? 'selected' : ''}>Web App</option>
+                                <option value="folder" ${project.type === 'folder' ? 'selected' : ''}>System Files Folder</option>
+                            </select>
+                            <input type="url" name="url" placeholder="URL (for Web Apps)" value="${project.url || ''}" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="bgColor" placeholder="Background Color (e.g., bg-blue-200)" value="${project.bgColor || ''}" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="text" name="category" placeholder="Category (e.g., Web Apps)" value="${project.category || ''}" required class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <textarea name="icon" placeholder="SVG Icon Code" rows="3" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">${project.icon || ''}</textarea>
+                            
+                            <div id="files-container" class="${project.type === 'folder' ? '' : 'hidden'}">
+                                <h4 class="text-lg font-semibold text-white mt-4">Files</h4>
+                                <div id="files-list" class="space-y-2 mt-2">${filesHTML}</div>
+                                <button type="button" id="add-file-btn" class="mt-2 text-sm text-blue-400 hover:text-blue-300">+ Add File</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-4 mt-6">
+                            <button type="button" class="close-modal-btn px-4 py-2 bg-gray-600 rounded text-white hover:bg-gray-500 transition">Cancel</button>
+                            <button type="submit" class="px-4 py-2 bg-blue-600 rounded text-white hover:bg-blue-500 transition">Save Project</button>
+                        </div>
+                    </form>
+                </div>`;
+            projectFormModalEl.classList.remove('opacity-0', 'pointer-events-none');
+            
+            // Toggle URL/Files visibility based on type
+            const typeSelect = projectFormModalEl.querySelector('select[name="type"]');
+            const urlInput = projectFormModalEl.querySelector('input[name="url"]');
+            const filesContainer = projectFormModalEl.querySelector('#files-container');
+            typeSelect.addEventListener('change', () => {
+                const isFolder = typeSelect.value === 'folder';
+                filesContainer.classList.toggle('hidden', !isFolder);
+                urlInput.classList.toggle('hidden', isFolder);
+            });
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const id = form.id.value;
+            const filesList = form.querySelector('#files-list');
+            const files = [...filesList.querySelectorAll('[data-file-index]')].map(el => ({
+                title: el.querySelector('.file-title-input').value,
+                url: el.querySelector('.file-url-input').value,
+            }));
+
+            const projectData = {
+                title: form.title.value,
+                description: form.description.value,
+                type: form.type.value,
+                url: form.url.value,
+                bgColor: form.bgColor.value,
+                category: form.category.value,
+                icon: form.icon.value,
+                files: form.type.value === 'folder' ? files : [],
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, "projects", id), projectData);
+                } else {
+                    await addDoc(projectsCollection, projectData);
+                }
+                projectFormModalEl.classList.add('opacity-0', 'pointer-events-none');
+            } catch (error) {
+                console.error("Error saving project:", error);
+                alert("Could not save project. Check console for details.");
+            }
+        }
         
-        // Initialize the application
+        // --- EVENT LISTENERS ---
+        addProjectBtn.addEventListener('click', () => showProjectForm());
+
+        document.addEventListener('click', async (e) => {
+            if (e.target.closest('.close-modal-btn')) {
+                e.target.closest('.modal').classList.add('opacity-0', 'pointer-events-none');
+            }
+            if (e.target.closest('#add-file-btn')) {
+                const list = document.getElementById('files-list');
+                const newIndex = list.children.length;
+                const fileEl = document.createElement('div');
+                fileEl.className = 'flex items-center space-x-2';
+                fileEl.dataset.fileIndex = newIndex;
+                fileEl.innerHTML = `
+                    <input type="text" placeholder="File Name" class="file-title-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                    <input type="url" placeholder="File URL" class="file-url-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                    <button type="button" class="remove-file-btn text-red-500 hover:text-red-400">&times;</button>
+                `;
+                list.appendChild(fileEl);
+            }
+            if (e.target.closest('.remove-file-btn')) {
+                e.target.closest('[data-file-index]').remove();
+            }
+            if (e.target.closest('#project-form')) {
+                if(e.target.type === 'submit') {
+                    handleFormSubmit(e);
+                }
+            }
+
+            const card = e.target.closest('.project-card');
+            if(!card) return;
+
+            const projectId = card.dataset.id;
+            const project = allProjects.find(p => p.id === projectId);
+
+            if (e.target.closest('.card-content')) {
+                recent = recent.filter(id => id !== projectId);
+                recent.unshift(projectId);
+                if (recent.length > 4) recent.pop();
+                saveRecent();
+                
+                if (project.type === 'webapp') {
+                    window.open(project.url, '_blank', 'noopener noreferrer');
+                } else if (project.type === 'folder') {
+                    showFileList(project);
+                }
+                renderAll();
+            }
+            if (e.target.closest('.favorite-btn')) {
+                favorites.includes(projectId) 
+                    ? favorites = favorites.filter(id => id !== projectId)
+                    : favorites.push(projectId);
+                saveFavorites();
+                renderAll();
+            }
+            if (e.target.closest('.edit-btn')) {
+                showProjectForm(project);
+            }
+            if (e.target.closest('.delete-btn')) {
+                if (confirm(`Are you sure you want to delete "${project.title}"?`)) {
+                    try {
+                        await deleteDoc(doc(db, "projects", projectId));
+                    } catch (error) {
+                        console.error("Error deleting document:", error);
+                        alert("Could not delete project. Check console for details.");
+                    }
+                }
+            }
+        });
+
+        filterButtonsContainer.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+                activeFilter = e.target.dataset.category;
+                renderFilterButtons();
+                filterAndSearch();
+            }
+        });
+        
+        searchInput.addEventListener('input', filterAndSearch);
+
+        // --- INITIALIZATION ---
         seedDatabaseIfEmpty();
 
     </script>
