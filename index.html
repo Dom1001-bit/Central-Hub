@@ -186,9 +186,14 @@
             grid.innerHTML = '';
 
             if (items.length === 0) {
-                section.classList.add('section-hidden');
-                return;
+                if (category === 'Favorites' || category === 'Recently Used') {
+                     grid.innerHTML = `<p class="text-gray-500 italic">No items in this section yet.</p>`;
+                } else {
+                    section.classList.add('section-hidden');
+                    return;
+                }
             }
+            
             section.classList.remove('section-hidden');
             
             items.forEach((item, index) => {
@@ -241,15 +246,11 @@
         
         function filterAndSearch() {
             const searchTerm = searchInput.value.toLowerCase();
-            allProjects.forEach(project => {
-                const card = document.querySelector(`.project-card[data-id="${project.id}"]`);
-                if(!card) return;
-
-                const titleMatch = project.title.toLowerCase().includes(searchTerm);
-                const descMatch = project.description.toLowerCase().includes(searchTerm);
-                const categoryMatch = activeFilter === 'All' || project.category === activeFilter;
+            document.querySelectorAll('.project-card').forEach(card => {
+                const titleMatch = card.dataset.title.includes(searchTerm);
+                const descMatch = card.dataset.description.includes(searchTerm);
                 
-                if((titleMatch || descMatch) && categoryMatch) {
+                if(titleMatch || descMatch) {
                     card.classList.remove('card-hidden');
                 } else {
                     card.classList.add('card-hidden');
@@ -260,8 +261,20 @@
 
         function updateSectionVisibility() {
             document.querySelectorAll('.project-section').forEach(section => {
+                const sectionCategory = section.id.replace('section-', '').replace(/-/g, ' ');
+                const isDynamicSection = ['Favorites', 'Recently Used'].includes(sectionCategory);
+                
+                if (activeFilter !== 'All' && !isDynamicSection && activeFilter !== sectionCategory) {
+                    section.classList.add('section-hidden');
+                    return;
+                }
+
                 const hasVisibleCards = section.querySelectorAll('.project-card:not(.card-hidden)').length > 0;
-                section.classList.toggle('section-hidden', !hasVisibleCards);
+                section.classList.toggle('section-hidden', !hasVisibleCards && !isDynamicSection);
+
+                if (isDynamicSection && activeFilter !== 'All') {
+                    section.classList.add('section-hidden');
+                }
             });
         }
         
@@ -286,14 +299,14 @@
             const files = project.files || [];
             const filesHTML = files.map((file, index) => `
                 <div class="flex items-center space-x-2" data-file-index="${index}">
-                    <input type="text" placeholder="File Name" value="${file.title}" class="file-title-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="url" placeholder="File URL" value="${file.url}" class="file-url-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="button" class="remove-file-btn text-red-500 hover:text-red-400">&times;</button>
+                    <input type="text" placeholder="File Name" value="${file.title || ''}" class="file-title-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="url" placeholder="File URL" value="${file.url || ''}" class="file-url-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="button" class="remove-file-btn text-red-500 hover:text-red-400 px-2">&times;</button>
                 </div>
             `).join('');
 
             projectFormModalEl.innerHTML = `
-                <div class="modal-content w-full max-w-lg bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-100/10 p-6 transform scale-100">
+                <div class="modal-content w-full max-w-lg bg-gray-800/80 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-100/10 p-6 transform scale-100 max-h-[90vh] overflow-y-auto">
                     <form id="project-form">
                         <h3 class="text-2xl font-bold text-white mb-6">${isEditing ? 'Edit Project' : 'Add New Project'}</h3>
                         <div class="space-y-4">
@@ -323,7 +336,6 @@
                 </div>`;
             projectFormModalEl.classList.remove('opacity-0', 'pointer-events-none');
             
-            // Toggle URL/Files visibility based on type
             const typeSelect = projectFormModalEl.querySelector('select[name="type"]');
             const urlInput = projectFormModalEl.querySelector('input[name="url"]');
             const filesContainer = projectFormModalEl.querySelector('#files-container');
@@ -349,7 +361,7 @@
                 title: form.title.value,
                 description: form.description.value,
                 type: form.type.value,
-                url: form.url.value,
+                url: form.type.value === 'webapp' ? form.url.value : '',
                 bgColor: form.bgColor.value,
                 category: form.category.value,
                 icon: form.icon.value,
@@ -369,9 +381,6 @@
             }
         }
         
-        // --- EVENT LISTENERS ---
-        addProjectBtn.addEventListener('click', () => showProjectForm());
-
         document.addEventListener('click', async (e) => {
             if (e.target.closest('.close-modal-btn')) {
                 e.target.closest('.modal').classList.add('opacity-0', 'pointer-events-none');
@@ -385,17 +394,12 @@
                 fileEl.innerHTML = `
                     <input type="text" placeholder="File Name" class="file-title-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
                     <input type="url" placeholder="File URL" class="file-url-input w-1/2 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
-                    <button type="button" class="remove-file-btn text-red-500 hover:text-red-400">&times;</button>
+                    <button type="button" class="remove-file-btn text-red-500 hover:text-red-400 px-2">&times;</button>
                 `;
                 list.appendChild(fileEl);
             }
             if (e.target.closest('.remove-file-btn')) {
                 e.target.closest('[data-file-index]').remove();
-            }
-            if (e.target.closest('#project-form')) {
-                if(e.target.type === 'submit') {
-                    handleFormSubmit(e);
-                }
             }
 
             const card = e.target.closest('.project-card');
@@ -403,6 +407,7 @@
 
             const projectId = card.dataset.id;
             const project = allProjects.find(p => p.id === projectId);
+            if(!project) return;
 
             if (e.target.closest('.card-content')) {
                 recent = recent.filter(id => id !== projectId);
@@ -439,6 +444,12 @@
             }
         });
 
+        projectFormModalEl.addEventListener('submit', (e) => {
+            if (e.target.id === 'project-form') {
+                handleFormSubmit(e);
+            }
+        });
+
         filterButtonsContainer.addEventListener('click', (e) => {
             if (e.target.tagName === 'BUTTON') {
                 activeFilter = e.target.dataset.category;
@@ -448,8 +459,8 @@
         });
         
         searchInput.addEventListener('input', filterAndSearch);
+        addProjectBtn.addEventListener('click', () => showProjectForm());
 
-        // --- INITIALIZATION ---
         seedDatabaseIfEmpty();
 
     </script>
