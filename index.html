@@ -155,7 +155,6 @@
 
         onAuthStateChanged(auth, user => {
             if (user) {
-                // User is signed in
                 console.log("User signed in:", user.displayName, user.uid);
                 console.log("IMPORTANT: If you are the admin, copy this UID and paste it into the ADMIN_UID constant and your Firestore Rules:", user.uid);
                 
@@ -172,9 +171,9 @@
                 
                 if (isAdmin) {
                     addProjectBtn.classList.remove('hidden');
+                    seedDatabaseIfEmpty(); // Only seed if the user is an admin.
                 }
 
-                // Start listening to data only after user is authenticated
                 onSnapshot(projectsCollection, (snapshot) => {
                     allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     loadingIndicator.style.display = 'none';
@@ -186,7 +185,6 @@
                 });
 
             } else {
-                // User is signed out
                 isAdmin = false;
                 authScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
@@ -228,7 +226,6 @@
         function createSection(category) {
             const sectionId = `section-${category.replace(/\s+/g, '-')}`;
             if(document.getElementById(sectionId)) {
-                // Clear grid content if section already exists, to prevent duplication
                 const grid = document.querySelector(`#${sectionId} > div`);
                 if(grid) grid.innerHTML = '';
                 return;
@@ -274,7 +271,7 @@
             card.className = 'project-card card-enter block p-6 rounded-xl border bg-gray-200/5 backdrop-blur-lg border-gray-100/10 shadow-lg transition-all duration-300 ease-in-out hover:-translate-y-1.5';
             card.dataset.id = project.id;
             card.dataset.title = project.title.toLowerCase();
-            card.dataset.description = project.description.toLowerCase();
+            card.dataset.description = project.description ? project.description.toLowerCase() : '';
             card.dataset.category = project.category;
 
             const isFavorited = favorites.includes(project.id);
@@ -285,7 +282,7 @@
                         <div class="flex-shrink-0 w-16 h-16 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg">${project.icon || ''}</div>
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-white">${project.title}</h3>
-                            <p class="mt-2 text-gray-300/80">${project.description}</p>
+                            <p class="mt-2 text-gray-300/80">${project.description || ''}</p>
                         </div>
                     </div>
                     ${ isAdmin ? `
@@ -533,8 +530,6 @@
         searchInput.addEventListener('input', filterAndSearch);
         addProjectBtn.addEventListener('click', () => showProjectForm());
 
-        seedDatabaseIfEmpty();
-
     </script>
 </body>
-</ht
+</html>
