@@ -116,7 +116,7 @@
         let allProjects = [];
         let activeFilter = 'All';
         let isAdmin = false;
-        let unsubscribe; // To hold the listener and detach it on sign-out
+        let unsubscribe; 
         let favorites = JSON.parse(localStorage.getItem('favoriteProjects') || '[]');
         let recent = JSON.parse(localStorage.getItem('recentlyUsedProjects') || '[]');
         const saveFavorites = () => localStorage.setItem('favoriteProjects', JSON.stringify(favorites));
@@ -213,8 +213,10 @@
         getRedirectResult(auth).catch(error => {
             // Handle redirect errors if necessary
             console.error("Error getting redirect result:", error);
-            authReady = true;
-            handleUser(null); // Ensure login screen is shown on error
+            if (!authReady) {
+                authReady = true;
+                handleUser(null); // Ensure login screen is shown on error
+            }
         });
         
         signInBtn.addEventListener('click', () => {
