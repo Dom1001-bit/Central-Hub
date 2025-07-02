@@ -204,18 +204,13 @@
         // --- AUTHENTICATION FLOW ---
         let authInitialized = false;
         onAuthStateChanged(auth, (user) => {
-            if (authInitialized) {
+            if (!authInitialized) {
+                authInitialized = true;
                 handleUser(user);
             }
         });
 
         getRedirectResult(auth)
-            .then((result) => {
-                if (!authInitialized) {
-                    authInitialized = true;
-                    handleUser(auth.currentUser);
-                }
-            })
             .catch((error) => {
                 console.error("Error getting redirect result:", error);
                 if (!authInitialized) {
@@ -226,10 +221,9 @@
         
         signInBtn.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
-            signInWithRedirect(auth, provider).catch(error => {
-                console.error("Sign in redirect error", error);
-                alert("Could not start sign-in process. Please check the console for details.");
-            });
+            initialLoadingScreen.style.display = 'flex';
+            authScreen.style.display = 'none';
+            signInWithRedirect(auth, provider);
         });
         
         function renderAll() {
