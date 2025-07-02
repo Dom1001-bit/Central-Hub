@@ -159,7 +159,7 @@
         }
 
         function handleUser(user) {
-            if (unsubscribe) unsubscribe(); // Detach any previous listener
+            if (unsubscribe) unsubscribe();
 
             if (user) {
                 console.log("User signed in:", user.displayName, user.uid);
@@ -201,24 +201,28 @@
             }
         }
 
-        onAuthStateChanged(auth, handleUser);
+        // --- AUTHENTICATION FLOW ---
+        let authReady = false;
+        onAuthStateChanged(auth, user => {
+            if (!authReady) {
+                authReady = true;
+                handleUser(user);
+            }
+        });
 
+        getRedirectResult(auth).catch(error => {
+            // Handle redirect errors if necessary
+            console.error("Error getting redirect result:", error);
+            authReady = true;
+            handleUser(null); // Ensure login screen is shown on error
+        });
+        
         signInBtn.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
             signInWithRedirect(auth, provider).catch(error => {
                 console.error("Sign in redirect error", error);
                 alert("Could not start sign-in process. Please check the console for details.");
             });
-        });
-
-        getRedirectResult(auth).then((result) => {
-            if (result) {
-                // This means the user has just signed in via redirect.
-                // onAuthStateChanged will handle the user object.
-                console.log("Redirect result processed.");
-            }
-        }).catch(error => {
-            console.error("Error getting redirect result:", error);
         });
         
         function renderAll() {
