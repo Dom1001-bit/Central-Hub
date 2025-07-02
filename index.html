@@ -75,7 +75,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const ADMIN_UID = 'S4sxXVpiZVYqivqWr9ARbndpRRv1';
@@ -195,12 +195,18 @@
             }
         });
 
+        // Use redirect-based sign-in to avoid cross-origin issues
         signInBtn.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
-            signInWithPopup(auth, provider).catch(error => {
-                console.error("Sign in error", error);
-                alert("Could not sign in. Please check the console for details.");
+            signInWithRedirect(auth, provider).catch(error => {
+                console.error("Sign in redirect error", error);
+                alert("Could not start sign-in process. Please check the console for details.");
             });
+        });
+
+        // Check for redirect result on page load
+        getRedirectResult(auth).catch(error => {
+            console.error("Error getting redirect result:", error);
         });
         
         function renderAll() {
