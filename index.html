@@ -78,9 +78,7 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        // --- IMPORTANT: ADD YOUR ADMIN UID HERE ---
-        // After you sign in for the first time, get your UID from the browser's developer console and paste it here.
-        const ADMIN_UID = 'YOUR_ADMIN_UID_HERE';
+        const ADMIN_UID = 'S4sxXVpiZVYqivqWr9ARbndpRRv1';
 
         const firebaseConfig = {
           apiKey: "AIzaSyBpU5pgitYuVLh1mAYHdLqt_CPkyyqVXms",
@@ -111,6 +109,7 @@
         let allProjects = [];
         let activeFilter = 'All';
         let isAdmin = false;
+        let unsubscribe; // To hold the listener and detach it on sign-out
         let favorites = JSON.parse(localStorage.getItem('favoriteProjects') || '[]');
         let recent = JSON.parse(localStorage.getItem('recentlyUsedProjects') || '[]');
         const saveFavorites = () => localStorage.setItem('favoriteProjects', JSON.stringify(favorites));
@@ -153,6 +152,10 @@
         }
 
         onAuthStateChanged(auth, user => {
+            if (unsubscribe) {
+                unsubscribe(); // Detach any previous listener
+            }
+
             if (user) {
                 console.log("User signed in:", user.displayName, user.uid);
                 console.log("IMPORTANT: If you are the admin, copy this UID and paste it into the ADMIN_UID constant and your Firestore Rules:", user.uid);
@@ -170,10 +173,10 @@
                 
                 if (isAdmin) {
                     addProjectBtn.classList.remove('hidden');
-                    seedDatabaseIfEmpty(); // Only seed if the user is an admin.
+                    seedDatabaseIfEmpty();
                 }
 
-                onSnapshot(projectsCollection, (snapshot) => {
+                unsubscribe = onSnapshot(projectsCollection, (snapshot) => {
                     allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     loadingIndicator.style.display = 'none';
                     renderAll();
@@ -185,6 +188,8 @@
 
             } else {
                 isAdmin = false;
+                allProjects = [];
+                renderAll();
                 authScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
             }
@@ -249,13 +254,12 @@
             if (items.length === 0) {
                 if (category === 'Favorites' || category === 'Recently Used') {
                      grid.innerHTML = `<p class="text-gray-500 italic">No items in this section yet.</p>`;
-                } else {
-                    section.classList.add('section-hidden');
-                    return;
                 }
-            } else {
-                 section.classList.remove('section-hidden');
+                section.classList.toggle('section-hidden', true);
+                return;
             }
+            
+            section.classList.remove('section-hidden');
             
             items.forEach((item, index) => {
                 const card = createCard(item);
