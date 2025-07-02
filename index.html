@@ -19,38 +19,19 @@
         .favorite-btn.favorited svg { fill: #facc15; stroke: #facc15; }
         .card-actions { opacity: 0; transition: opacity 0.2s ease-in-out; }
         .project-card:hover .card-actions { opacity: 1; }
-        #auth-screen, #app-container { display: none; } /* Hidden by default */
-        #initial-loading-screen { display: flex; } /* Visible by default */
     </style>
 </head>
 <body class="animated-gradient text-gray-200">
-
-    <!-- Initial Loading Screen -->
-    <div id="initial-loading-screen" class="min-h-screen flex flex-col items-center justify-center">
-        <p class="text-lg text-gray-400">Initializing...</p>
-    </div>
-
-    <!-- Auth Screen -->
-    <div id="auth-screen" class="min-h-screen flex flex-col items-center justify-center">
-        <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-24 mb-8" onerror="this.style.display='none'">
-        <h1 class="text-4xl font-bold text-white mb-4">Welcome to the Central Hub</h1>
-        <p class="text-gray-400 mb-8">Please sign in to continue.</p>
-        <button id="sign-in-btn" class="bg-white text-gray-800 font-semibold py-3 px-6 rounded-lg flex items-center space-x-2 hover:bg-gray-200 transition-colors">
-            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C12.955 4 4 12.955 4 24s8.955 20 20 20s20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4C16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.574l6.19 5.238C42.012 35.836 44 30.138 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
-            <span>Sign in with Google</span>
-        </button>
-    </div>
 
     <!-- Main App Container -->
     <div id="app-container" class="container mx-auto px-4 py-8 md:py-12">
         <header class="relative text-center mb-12">
             <div class="flex justify-center items-center mb-8">
                 <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-24" onerror="this.style.display='none'">
-                <div id="user-info" class="absolute top-0 right-0 flex items-center space-x-4"></div>
             </div>
             <h1 class="text-4xl md:text-5xl font-bold text-white">Central Hub</h1>
             <p class="mt-4 text-lg text-gray-400">A directory for all deployed Web Apps, Tools, and System Files.</p>
-            <button id="add-project-btn" class="hidden absolute top-0 left-0 mt-2 ml-2 bg-blue-500 hover:bg-blue-600 text-white font-bold p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105">
+            <button id="add-project-btn" class="absolute top-0 left-0 mt-2 ml-2 bg-blue-500 hover:bg-blue-600 text-white font-bold p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
             </button>
         </header>
@@ -81,10 +62,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, getDocs, doc, addDoc, updateDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-        const ADMIN_UID = 'S4sxXVpiZVYqivqWr9ARbndpRRv1';
 
         const firebaseConfig = {
           apiKey: "AIzaSyBpU5pgitYuVLh1mAYHdLqt_CPkyyqVXms",
@@ -96,7 +74,6 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
         const projectsCollection = collection(db, "projects");
 
@@ -107,16 +84,10 @@
         const projectFormModalEl = document.getElementById('project-form-modal');
         const addProjectBtn = document.getElementById('add-project-btn');
         const loadingIndicator = document.getElementById('loading-indicator');
-        const authScreen = document.getElementById('auth-screen');
-        const appContainer = document.getElementById('app-container');
-        const signInBtn = document.getElementById('sign-in-btn');
-        const userInfoEl = document.getElementById('user-info');
-        const initialLoadingScreen = document.getElementById('initial-loading-screen');
         
         let allProjects = [];
         let activeFilter = 'All';
-        let isAdmin = false;
-        let unsubscribe; 
+        const isAdmin = true; // Admin controls are now always on
         let favorites = JSON.parse(localStorage.getItem('favoriteProjects') || '[]');
         let recent = JSON.parse(localStorage.getItem('recentlyUsedProjects') || '[]');
         const saveFavorites = () => localStorage.setItem('favoriteProjects', JSON.stringify(favorites));
@@ -204,25 +175,21 @@
         // --- AUTHENTICATION FLOW ---
         let authInitialized = false;
         onAuthStateChanged(auth, (user) => {
-            // This will fire once the user state is determined
             if (!authInitialized) {
                 authInitialized = true;
                 handleUser(user);
             }
         });
 
-        // This is used to capture the result after redirecting back
         getRedirectResult(auth)
             .then((result) => {
-                // If a result exists, onAuthStateChanged will handle it.
-                // This block can be used for specific post-login actions if needed.
-                if (result) {
-                    console.log("Redirect result processed for user:", result.user.displayName);
+                if (!authInitialized) {
+                    authInitialized = true;
+                    handleUser(auth.currentUser);
                 }
             })
             .catch((error) => {
                 console.error("Error getting redirect result:", error);
-                // If there's an error, ensure the login screen is shown
                 if (!authInitialized) {
                     authInitialized = true;
                     handleUser(null);
@@ -569,3 +536,5 @@
     </script>
 </body>
 </html>
+"
+I want to add a new feature, a todo list with a checkbox, can you add it on the right side of the page, I want it to be a floating todo l
