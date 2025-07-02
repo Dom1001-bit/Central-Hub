@@ -80,15 +80,15 @@
 
         // --- IMPORTANT: ADD YOUR ADMIN UID HERE ---
         // After you sign in for the first time, get your UID from the browser's developer console and paste it here.
-        const ADMIN_UID = 'S4sxXVpiZVYqivqWr9ARbndpRRv1';
+        const ADMIN_UID = 'YOUR_ADMIN_UID_HERE';
 
         const firebaseConfig = {
-          apiKey: "AIzaSyDcmhelshx4KWM1yeiBmo9a9VbXGJZbWQ0",
-          authDomain: "central-hub-directory.firebaseapp.com",
-          projectId: "central-hub-directory",
-          storageBucket: "central-hub-directory.appspot.com",
-          messagingSenderId: "962198640193",
-          appId: "1:962198640193:web:19e50b3fc71ce4d1bc18c0"
+          apiKey: "AIzaSyBpU5pgitYuVLh1mAYHdLqt_CPkyyqVXms",
+          authDomain: "central-hub-a3d68.firebaseapp.com",
+          projectId: "central-hub-a3d68",
+          storageBucket: "central-hub-a3d68.appspot.com",
+          messagingSenderId: "4439926098",
+          appId: "1:4439926098:web:3430ec708c3726f67d068b"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -116,7 +116,6 @@
         const saveFavorites = () => localStorage.setItem('favoriteProjects', JSON.stringify(favorites));
         const saveRecent = () => localStorage.setItem('recentlyUsedProjects', JSON.stringify(recent));
 
-        // ... (seedData array remains the same)
         const seedData = [
              { type: 'webapp', title: "Supplier Inventory Database", description: "Manage, search, and track all supplier's prices and inventory for all products.", url: "https://script.google.com/macros/s/AKfycbyiG9GtihUBDAbH2-rj3FJv70x2P4yUa4aYhJUOfMOFQLV8X8qxehX9WkdTPHwueODI/exec", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M20 17.58A5 5 0 0 0 15 12.5a5 5 0 0 0-5-5H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H4s-1 0-1 1 1 1 1 1h11.42a5 5 0 0 0 4.58-7.42z"/><path d="M12 12.5a2.5 2.5 0 0 1 0 5"/><path d="M12 7.5a2.5 2.5 0 0 1 0 5"/></svg>`, bgColor: 'bg-blue-200', category: 'Web Apps'},
             { type: 'webapp', title: "Master Product Database", description: "Centralized database for all product SKUs, details, and specifications.", url: "https://dom1001-bit.github.io/UPC-lookup-item/", icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-gray-800"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="M12 22.08V12"/></svg>`, bgColor: 'bg-green-200', category: 'Web Apps'},
