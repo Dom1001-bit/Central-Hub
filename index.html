@@ -129,80 +129,16 @@
             }
         }
 
-        function handleUser(user) {
-            if (unsubscribe) unsubscribe();
-
-            initialLoadingScreen.style.display = 'none';
-
-            if (user) {
-                console.log("User signed in:", user.displayName, user.uid);
-                console.log("IMPORTANT: If you are the admin, copy this UID and paste it into the ADMIN_UID constant and your Firestore Rules:", user.uid);
-                
-                isAdmin = user.uid === ADMIN_UID;
-                
-                authScreen.style.display = 'none';
-                appContainer.style.display = 'block';
-
-                userInfoEl.innerHTML = `
-                    <img src="${user.photoURL}" alt="${user.displayName}" class="h-10 w-10 rounded-full">
-                    <button id="sign-out-btn" class="text-sm text-gray-400 hover:text-white">Sign Out</button>
-                `;
-                document.getElementById('sign-out-btn').addEventListener('click', () => signOut(auth));
-                
-                if (isAdmin) {
-                    addProjectBtn.classList.remove('hidden');
-                    seedDatabaseIfEmpty();
-                }
-
-                unsubscribe = onSnapshot(projectsCollection, (snapshot) => {
-                    allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    loadingIndicator.style.display = 'none';
-                    renderAll();
-                }, (error) => {
-                    console.error("Error with real-time listener:", error);
-                    loadingIndicator.style.display = 'none';
-                    mainContent.innerHTML = `<p class="text-red-400 text-center">Failed to listen to database changes. Please check your connection and Firebase rules.</p>`;
-                });
-
-            } else {
-                isAdmin = false;
-                allProjects = [];
-                authScreen.style.display = 'flex';
-                appContainer.style.display = 'none';
-            }
-        }
-
-        // --- AUTHENTICATION FLOW ---
-        let authInitialized = false;
-        onAuthStateChanged(auth, (user) => {
-            if (!authInitialized) {
-                authInitialized = true;
-                handleUser(user);
-            }
+        onSnapshot(projectsCollection, (snapshot) => {
+            allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            loadingIndicator.style.display = 'none';
+            renderAll();
+        }, (error) => {
+            console.error("Error with real-time listener:", error);
+            loadingIndicator.style.display = 'none';
+            mainContent.innerHTML = `<p class="text-red-400 text-center">Failed to listen to database changes. Please check your connection and Firebase rules.</p>`;
         });
 
-        getRedirectResult(auth)
-            .then((result) => {
-                if (!authInitialized) {
-                    authInitialized = true;
-                    handleUser(auth.currentUser);
-                }
-            })
-            .catch((error) => {
-                console.error("Error getting redirect result:", error);
-                if (!authInitialized) {
-                    authInitialized = true;
-                    handleUser(null);
-                }
-            });
-        
-        signInBtn.addEventListener('click', () => {
-            const provider = new GoogleAuthProvider();
-            initialLoadingScreen.style.display = 'flex';
-            authScreen.style.display = 'none';
-            signInWithRedirect(auth, provider);
-        });
-        
         function renderAll() {
             mainContent.innerHTML = '';
             const allDynamicCategories = ['Favorites', 'Recently Used'];
@@ -288,7 +224,6 @@
                             <p class="mt-2 text-gray-300/80">${project.description || ''}</p>
                         </div>
                     </div>
-                    ${ isAdmin ? `
                     <div class="card-actions absolute top-[-10px] right-[-10px] flex space-x-1">
                         <button class="favorite-btn p-2 rounded-full bg-gray-700/80 hover:bg-gray-600/80 transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite">
                             <svg class="h-4 w-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -299,13 +234,7 @@
                         <button class="delete-btn p-2 rounded-full bg-red-500/80 hover:bg-red-600/80 transition-colors" title="Delete">
                              <svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         </button>
-                    </div>` : `
-                    <div class="card-actions absolute top-[-10px] right-[-10px] flex space-x-1">
-                         <button class="favorite-btn p-2 rounded-full bg-gray-700/80 hover:bg-gray-600/80 transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite">
-                            <svg class="h-4 w-4 text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                        </button>
                     </div>
-                    ` }
                 </div>
             `;
             return card;
@@ -533,8 +462,18 @@
         searchInput.addEventListener('input', filterAndSearch);
         addProjectBtn.addEventListener('click', () => showProjectForm());
 
+        // Initial Load
+        seedDatabaseIfEmpty();
+        onSnapshot(projectsCollection, (snapshot) => {
+            allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            loadingIndicator.style.display = 'none';
+            renderAll();
+        }, (error) => {
+            console.error("Error with real-time listener:", error);
+            loadingIndicator.style.display = 'none';
+            mainContent.innerHTML = `<p class="text-red-400 text-center">Failed to listen to database changes. Please check your connection and Firebase rules.</p>`;
+        });
+
     </script>
 </body>
 </html>
-"
-I want to add a new feature, a todo list with a checkbox, can you add it on the right side of the page, I want it to be a floating todo l
