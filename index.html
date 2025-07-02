@@ -20,9 +20,15 @@
         .card-actions { opacity: 0; transition: opacity 0.2s ease-in-out; }
         .project-card:hover .card-actions { opacity: 1; }
         #auth-screen, #app-container { display: none; } /* Hidden by default */
+        #initial-loading-screen { display: flex; } /* Visible by default */
     </style>
 </head>
 <body class="animated-gradient text-gray-200">
+
+    <!-- Initial Loading Screen -->
+    <div id="initial-loading-screen" class="min-h-screen flex flex-col items-center justify-center">
+        <p class="text-lg text-gray-400">Initializing...</p>
+    </div>
 
     <!-- Auth Screen -->
     <div id="auth-screen" class="min-h-screen flex flex-col items-center justify-center">
@@ -61,7 +67,7 @@
         </div>
         <main id="main-content">
             <div id="loading-indicator" class="text-center">
-                <p class="text-lg text-gray-400">Awaiting sign-in...</p>
+                <p class="text-lg text-gray-400">Loading projects...</p>
             </div>
         </main>
         <footer class="text-center mt-16 text-gray-500/80">
@@ -105,6 +111,7 @@
         const appContainer = document.getElementById('app-container');
         const signInBtn = document.getElementById('sign-in-btn');
         const userInfoEl = document.getElementById('user-info');
+        const initialLoadingScreen = document.getElementById('initial-loading-screen');
         
         let allProjects = [];
         let activeFilter = 'All';
@@ -151,10 +158,8 @@
             }
         }
 
-        onAuthStateChanged(auth, user => {
-            if (unsubscribe) {
-                unsubscribe(); // Detach any previous listener
-            }
+        function handleUser(user) {
+            if (unsubscribe) unsubscribe(); // Detach any previous listener
 
             if (user) {
                 console.log("User signed in:", user.displayName, user.uid);
@@ -162,6 +167,7 @@
                 
                 isAdmin = user.uid === ADMIN_UID;
                 
+                initialLoadingScreen.style.display = 'none';
                 authScreen.style.display = 'none';
                 appContainer.style.display = 'block';
 
@@ -189,13 +195,14 @@
             } else {
                 isAdmin = false;
                 allProjects = [];
-                renderAll();
+                initialLoadingScreen.style.display = 'none';
                 authScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
             }
-        });
+        }
 
-        // Use redirect-based sign-in to avoid cross-origin issues
+        onAuthStateChanged(auth, handleUser);
+
         signInBtn.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
             signInWithRedirect(auth, provider).catch(error => {
@@ -204,8 +211,13 @@
             });
         });
 
-        // Check for redirect result on page load
-        getRedirectResult(auth).catch(error => {
+        getRedirectResult(auth).then((result) => {
+            if (result) {
+                // This means the user has just signed in via redirect.
+                // onAuthStateChanged will handle the user object.
+                console.log("Redirect result processed.");
+            }
+        }).catch(error => {
             console.error("Error getting redirect result:", error);
         });
         
