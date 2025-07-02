@@ -204,15 +204,25 @@
         // --- AUTHENTICATION FLOW ---
         let authInitialized = false;
         onAuthStateChanged(auth, (user) => {
+            // This will fire once the user state is determined
             if (!authInitialized) {
                 authInitialized = true;
                 handleUser(user);
             }
         });
 
+        // This is used to capture the result after redirecting back
         getRedirectResult(auth)
+            .then((result) => {
+                // If a result exists, onAuthStateChanged will handle it.
+                // This block can be used for specific post-login actions if needed.
+                if (result) {
+                    console.log("Redirect result processed for user:", result.user.displayName);
+                }
+            })
             .catch((error) => {
                 console.error("Error getting redirect result:", error);
+                // If there's an error, ensure the login screen is shown
                 if (!authInitialized) {
                     authInitialized = true;
                     handleUser(null);
