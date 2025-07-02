@@ -161,13 +161,14 @@
         function handleUser(user) {
             if (unsubscribe) unsubscribe();
 
+            initialLoadingScreen.style.display = 'none';
+
             if (user) {
                 console.log("User signed in:", user.displayName, user.uid);
                 console.log("IMPORTANT: If you are the admin, copy this UID and paste it into the ADMIN_UID constant and your Firestore Rules:", user.uid);
                 
                 isAdmin = user.uid === ADMIN_UID;
                 
-                initialLoadingScreen.style.display = 'none';
                 authScreen.style.display = 'none';
                 appContainer.style.display = 'block';
 
@@ -195,29 +196,33 @@
             } else {
                 isAdmin = false;
                 allProjects = [];
-                initialLoadingScreen.style.display = 'none';
                 authScreen.style.display = 'flex';
                 appContainer.style.display = 'none';
             }
         }
 
         // --- AUTHENTICATION FLOW ---
-        let authReady = false;
-        onAuthStateChanged(auth, user => {
-            if (!authReady) {
-                authReady = true;
+        let authInitialized = false;
+        onAuthStateChanged(auth, (user) => {
+            if (authInitialized) {
                 handleUser(user);
             }
         });
 
-        getRedirectResult(auth).catch(error => {
-            // Handle redirect errors if necessary
-            console.error("Error getting redirect result:", error);
-            if (!authReady) {
-                authReady = true;
-                handleUser(null); // Ensure login screen is shown on error
-            }
-        });
+        getRedirectResult(auth)
+            .then((result) => {
+                if (!authInitialized) {
+                    authInitialized = true;
+                    handleUser(auth.currentUser);
+                }
+            })
+            .catch((error) => {
+                console.error("Error getting redirect result:", error);
+                if (!authInitialized) {
+                    authInitialized = true;
+                    handleUser(null);
+                }
+            });
         
         signInBtn.addEventListener('click', () => {
             const provider = new GoogleAuthProvider();
