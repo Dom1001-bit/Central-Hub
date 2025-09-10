@@ -15,8 +15,9 @@
         :root {
             --background: #f1f5f9; /* slate-100 */
             --foreground: #0f172a; /* slate-900 */
+            --sidebar-bg: #ffffff;
             --card-bg: rgba(255, 255, 255, 0.6);
-            --card-border: rgba(255, 255, 255, 0.8);
+            --card-border: rgba(0, 0, 0, 0.05);
             --card-foreground: #0f172a;
             --primary: #2563eb; /* blue-600 */
             --primary-foreground: #f8fafc;
@@ -31,6 +32,7 @@
         .dark {
             --background: #020817; /* slate-950 */
             --foreground: #f8fafc;
+            --sidebar-bg: #0f172a; /* slate-900 */
             --card-bg: rgba(22, 34, 57, 0.5); /* adjusted slate-900 */
             --card-border: rgba(255, 255, 255, 0.1);
             --card-foreground: #f8fafc;
@@ -44,8 +46,8 @@
             --ring: #3b82f6;
         }
 
-        body { 
-            font-family: 'Inter', sans-serif; 
+        body {
+            font-family: 'Inter', sans-serif;
             background-color: var(--background);
             color: var(--foreground);
             transition: background-color 0.3s, color 0.3s;
@@ -65,8 +67,8 @@
         .color-blob {
             position: absolute;
             border-radius: 50%;
-            opacity: 0.5;
-            filter: blur(80px);
+            opacity: 0.3;
+            filter: blur(100px);
             animation: move 25s infinite alternate;
         }
         .blob-1 { background-color: #3b82f6; width: 400px; height: 400px; top: 10%; left: 10%; }
@@ -74,8 +76,8 @@
         .blob-3 { background-color: #14b8a6; width: 350px; height: 350px; top: 70%; left: 20%; animation-delay: 10s;}
         
         @keyframes move {
-            from { transform: translate(-100px, -50px) rotate(-90deg); }
-            to { transform: translate(100px, 100px) rotate(90deg); }
+            from { transform: translate(-100px, -50px) rotate(-90deg) scale(0.8); }
+            to { transform: translate(100px, 100px) rotate(90deg) scale(1.2); }
         }
         
         /* Glassmorphism Styles */
@@ -103,12 +105,29 @@
              border: 1px solid var(--card-border);
         }
         .btn-destructive { background-color: var(--destructive); color: var(--destructive-foreground); }
-        .filter-btn-active { background-color: var(--primary) !important; color: var(--primary-foreground) !important; }
-        .filter-btn { background-color: var(--secondary-bg); color: var(--muted-foreground); border: 1px solid var(--card-border); }
-        .favorite-btn.favorited svg { fill: #facc15; stroke: #facc15; }
 
+        /* Card Parallax Hover Effect */
+        .project-card {
+            transform-style: preserve-3d;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+        }
+        .project-card .card-content, .project-card .card-actions {
+            transform: translateZ(20px); /* Bring content forward */
+        }
+        .project-card .card-icon-wrapper {
+            transform: translateZ(50px); /* Bring icon even more forward */
+        }
+        
+        .favorite-btn.favorited svg { fill: #facc15; stroke: #facc15; }
         .notification-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--destructive); border: 2px solid var(--card-bg); }
         .tab-btn.active { border-color: var(--primary); color: var(--primary); }
+        .sidebar-filter-link.active { background-color: var(--primary); color: var(--primary-foreground); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background-color: rgba(128, 128, 128, 0.3); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background-color: rgba(128, 128, 128, 0.5); }
     </style>
 </head>
 <body class="min-h-screen">
@@ -120,6 +139,7 @@
 
     <!-- Auth Container -->
     <div id="auth-container" class="w-full min-h-screen flex items-center justify-center p-4">
+        <!-- Auth content remains the same -->
         <div class="glass-panel w-full max-w-md mx-auto rounded-2xl shadow-2xl p-8">
             <div class="flex justify-center items-center mb-6">
                 <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-20" onerror="this.style.display='none'">
@@ -162,67 +182,76 @@
     </div>
 
     <!-- Main App Container -->
-    <div id="app-container" class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 hidden h-screen overflow-y-auto">
-        <header class="relative text-center mb-12">
-            <div class="flex justify-center items-center mb-6">
-                <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-24" onerror="this.style.display='none'">
+    <div id="app-container" class="hidden h-screen w-full flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-[var(--sidebar-bg)] border-r border-[var(--card-border)] flex flex-col p-4 transition-all duration-300">
+            <div class="flex items-center space-x-2 px-2 mb-8">
+                <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-10" onerror="this.style.display='none'">
+                <h1 class="text-xl font-bold">Central Hub</h1>
             </div>
-            <h1 class="text-4xl md:text-5xl font-bold">Central Hub</h1>
-            <p class="mt-4 text-lg text-[var(--muted-foreground)]">A directory for all deployed Web Apps, Tools, and System Files.</p>
             
-            <div class="absolute top-0 -mt-2 right-0 flex items-center space-x-2">
-                <div id="admin-controls" class="hidden flex items-center space-x-2">
-                    <button id="add-project-btn" class="btn-primary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Add Project">
-                        <i data-lucide="plus"></i>
-                    </button>
-                    <button id="manage-users-btn" class="btn-secondary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Manage Users">
-                        <i data-lucide="users"></i>
-                    </button>
-                </div>
-                 <div class="relative">
-                    <button id="notification-btn" class="btn-secondary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Notifications">
-                        <i data-lucide="bell"></i>
-                        <div id="notification-dot" class="hidden notification-dot"></div>
-                    </button>
-                    <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 glass-panel rounded-lg shadow-xl z-20">
-                        <div class="p-3 border-b border-[var(--card-border)] flex justify-between items-center">
-                            <h3 class="font-semibold">Notifications</h3>
-                            <button id="clear-notifications-btn" class="text-sm text-[var(--primary)] hover:underline">Mark all as read</button>
-                        </div>
-                        <ul id="notification-list" class="max-h-96 overflow-y-auto p-2"></ul>
-                    </div>
-                </div>
-                <button id="theme-switcher" class="btn-secondary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Toggle Theme">
+            <nav id="filter-navigation" class="flex-grow space-y-2">
+                <!-- Filter links will be dynamically inserted here -->
+            </nav>
+
+            <div class="mt-auto pt-4 border-t border-[var(--card-border)] space-y-2">
+                <button id="theme-switcher" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--secondary-bg)] transition-colors">
                     <i data-lucide="sun" class="block dark:hidden"></i>
                     <i data-lucide="moon" class="hidden dark:block"></i>
+                    <span>Toggle Theme</span>
                 </button>
-                <button id="sign-out-btn" class="btn-secondary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Sign Out">
+                 <button id="sign-out-btn" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--secondary-bg)] transition-colors">
                     <i data-lucide="log-out"></i>
+                    <span>Sign Out</span>
                 </button>
             </div>
-        </header>
+        </aside>
 
-        <div class="mb-12 px-4 md:px-0">
-            <div class="max-w-3xl mx-auto">
-                <div class="relative mb-6">
-                    <input type="text" id="search-input" placeholder="Search by name or description..." class="input-base w-full pl-12 pr-4 py-3 rounded-full focus:outline-none focus:ring-2 transition-all">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i data-lucide="search" class="text-[var(--muted-foreground)]"></i>
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen">
+            <header class="flex-shrink-0 bg-[var(--background)]/80 backdrop-blur-sm border-b border-[var(--card-border)] p-4 flex items-center justify-between">
+                <div class="relative w-full max-w-md">
+                   <input type="text" id="search-input" placeholder="Search by name or description..." class="input-base w-full pl-10 pr-4 py-2 rounded-full text-sm focus:outline-none focus:ring-2 transition-all">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="h-5 w-5 text-[var(--muted-foreground)]"></i>
                     </div>
                 </div>
-                <div id="filter-buttons" class="flex justify-center items-center space-x-2 flex-wrap pt-6"></div>
-            </div>
+
+                <div class="flex items-center space-x-2">
+                    <div id="admin-controls" class="hidden flex items-center space-x-2">
+                        <button id="add-project-btn" class="btn-primary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Add Project">
+                            <i data-lucide="plus"></i>
+                        </button>
+                        <button id="manage-users-btn" class="btn-secondary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Manage Users">
+                            <i data-lucide="users"></i>
+                        </button>
+                    </div>
+                     <div class="relative">
+                        <button id="notification-btn" class="btn-secondary p-2.5 rounded-full shadow-lg transition-transform transform hover:scale-105" title="Notifications">
+                            <i data-lucide="bell"></i>
+                            <div id="notification-dot" class="hidden notification-dot"></div>
+                        </button>
+                        <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 glass-panel rounded-lg shadow-xl z-20">
+                            <div class="p-3 border-b border-[var(--card-border)] flex justify-between items-center">
+                                <h3 class="font-semibold">Notifications</h3>
+                                <button id="clear-notifications-btn" class="text-sm text-[var(--primary)] hover:underline">Mark all as read</button>
+                            </div>
+                            <ul id="notification-list" class="max-h-96 overflow-y-auto p-2"></ul>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <main id="main-content" class="flex-1 overflow-y-auto p-6 md:p-8">
+                <div id="loading-indicator" class="text-center py-16">
+                     <div role="status" class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--primary)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <p class="mt-4 text-lg text-[var(--muted-foreground)]">Loading projects...</p>
+                </div>
+                 <div id="empty-state-message" class="hidden text-center py-16"></div>
+                 <footer class="text-center mt-16 text-[var(--muted-foreground)]/80 pb-8">
+                    <p>Powered by Firebase. All data is live.</p>
+                </footer>
+            </main>
         </div>
-        <main id="main-content">
-            <div id="loading-indicator" class="text-center py-16">
-                 <div role="status" class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--primary)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                <p class="mt-4 text-lg text-[var(--muted-foreground)]">Loading projects...</p>
-            </div>
-             <div id="empty-state-message" class="hidden text-center py-16"></div>
-        </main>
-        <footer class="text-center mt-16 text-[var(--muted-foreground)]/80 pb-8">
-            <p>Powered by Firebase. All data is live.</p>
-        </footer>
     </div>
 
     <!-- Modals -->
@@ -267,7 +296,7 @@
         const adminControls = document.getElementById('admin-controls');
         const manageUsersBtn = document.getElementById('manage-users-btn');
         const searchInput = document.getElementById('search-input');
-        const filterButtonsContainer = document.getElementById('filter-buttons');
+        const filterNavigation = document.getElementById('filter-navigation');
         const fileListModalEl = document.getElementById('file-list-modal');
         const projectFormModalEl = document.getElementById('project-form-modal');
         const userManagementModalEl = document.getElementById('user-management-modal');
@@ -352,22 +381,28 @@
         
         // --- Rendering ---
         function renderAll() {
-            mainContent.innerHTML = '';
+            mainContent.querySelectorAll('.project-section').forEach(el => el.remove()); // Clear previous sections
             emptyStateMessage.classList.add('hidden');
-            const allDynamicCategories = ['Favorites'];
-            let staticCategories = [...new Set(allProjects.map(p => p.category))];
+
+            const staticCategories = [...new Set(allProjects.map(p => p.category))];
             staticCategories.sort((a, b) => { if (a === 'Web Apps') return -1; if (b === 'Web Apps') return 1; return a.localeCompare(b); });
-            [...allDynamicCategories, ...staticCategories].forEach(createSection);
+            const allCategories = ['Favorites', ...staticCategories];
+
+            allCategories.forEach(createSection);
+            
             const projectMap = new Map(allProjects.map(p => [p.id, p]));
             const favoriteProjects = favorites.map(id => projectMap.get(id)).filter(Boolean);
             populateGrid('Favorites', favoriteProjects);
+            
             staticCategories.forEach(category => {
                 const categoryProjects = allProjects.filter(p => p.category === category);
                 populateGrid(category, categoryProjects);
             });
-            renderFilterButtons();
+            
+            renderFilterNavigation();
             filterAndSearch();
             lucide.createIcons();
+            addParallaxEventListeners();
         }
 
         function createSection(category) {
@@ -376,14 +411,14 @@
             const section = document.createElement('div');
             section.id = sectionId;
             section.className = 'mb-12 project-section';
-            section.innerHTML = `<h2 class="text-2xl font-bold mb-6 border-b border-[var(--card-border)] pb-3">${category}</h2><div class="project-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-category="${category}"></div>`;
-            mainContent.appendChild(section);
+            section.innerHTML = `<h2 class="text-2xl font-bold mb-6">${category}</h2><div class="project-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-category="${category}"></div>`;
+            mainContent.insertBefore(section, mainContent.querySelector('footer'));
         }
 
         function populateGrid(category, items) {
             const section = document.getElementById(`section-${category.replace(/\s+/g, '-')}`);
             if (!section) return;
-            const grid = section.querySelector('div');
+            const grid = section.querySelector('.project-grid');
             grid.innerHTML = '';
             if (items.length === 0) {
                 if (category === 'Favorites') {
@@ -405,16 +440,31 @@
 
         function createCard(project) {
             const card = document.createElement('div');
-            card.className = `project-card glass-panel opacity-0 translate-y-5 block p-5 rounded-2xl shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1.5 hover:border-[var(--primary)]`;
+            card.className = `project-card glass-panel opacity-0 translate-y-5 block p-5 rounded-2xl shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:border-[var(--primary)]`;
             card.dataset.id = project.id; card.dataset.title = project.title.toLowerCase(); card.dataset.description = project.description ? project.description.toLowerCase() : '';
             card.dataset.category = project.category;
             const isFavorited = favorites.includes(project.id);
             const adminButtonsHTML = userRole === 'admin' ? `<button class="edit-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors" title="Edit"><i data-lucide="pencil" class="h-4 w-4"></i></button><button class="delete-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--destructive)] hover:text-white transition-colors" title="Delete"><i data-lucide="trash-2" class="h-4 w-4"></i></button>` : '';
-            card.innerHTML = `<div class="relative h-full flex flex-col"><div class="card-content flex-grow flex items-start space-x-4 cursor-pointer"><div class="flex-shrink-0 w-16 h-16 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg text-slate-800">${project.icon || ''}</div><div class="flex-1"><h3 class="text-lg font-semibold">${project.title}</h3><p class="mt-1 text-sm text-[var(--muted-foreground)]">${project.description || ''}</p></div></div><div class="card-actions absolute top-[-15px] right-[-15px] flex space-x-1"><button class="favorite-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>${adminButtonsHTML}</div></div>`;
+            
+            card.innerHTML = `
+            <div class="relative h-full flex flex-col">
+                <div class="card-content flex-grow flex items-start space-x-4 cursor-pointer">
+                    <div class="card-icon-wrapper flex-shrink-0 w-16 h-16 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg text-slate-800">${project.icon || ''}</div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold">${project.title}</h3>
+                        <p class="mt-1 text-sm text-[var(--muted-foreground)]">${project.description || ''}</p>
+                    </div>
+                </div>
+                <div class="card-actions absolute top-[-15px] right-[-15px] flex space-x-1">
+                    <button class="favorite-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
+                    ${adminButtonsHTML}
+                </div>
+            </div>`;
             return card;
         }
 
         // --- Notifications ---
+        // Functions: renderNotifications, timeAgo, createNotification are unchanged
         function renderNotifications() {
             const lastSeenTimestamp = loadFromLocalStorage('lastSeenNotification', '0');
             let hasUnread = false;
@@ -433,16 +483,11 @@
             if (!timestamp) return 'Just now';
             const now = Date.now();
             const seconds = Math.floor((now - timestamp.toMillis()) / 1000);
-            let interval = seconds / 31536000;
-            if (interval > 1) return Math.floor(interval) + " years ago";
-            interval = seconds / 2592000;
-            if (interval > 1) return Math.floor(interval) + " months ago";
-            interval = seconds / 86400;
-            if (interval > 1) return Math.floor(interval) + " days ago";
-            interval = seconds / 3600;
-            if (interval > 1) return Math.floor(interval) + " hours ago";
-            interval = seconds / 60;
-            if (interval > 1) return Math.floor(interval) + " minutes ago";
+            let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + " years ago";
+            interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + " months ago";
+            interval = seconds / 86400; if (interval > 1) return Math.floor(interval) + " days ago";
+            interval = seconds / 3600; if (interval > 1) return Math.floor(interval) + " hours ago";
+            interval = seconds / 60; if (interval > 1) return Math.floor(interval) + " minutes ago";
             return "Just now";
         }
         async function createNotification(action, title) {
@@ -453,23 +498,48 @@
         clearNotificationsBtn.addEventListener('click', () => { saveToLocalStorage('lastSeenNotification', Date.now().toString()); renderNotifications(); });
         
         // --- Filtering and Empty States ---
-        function renderFilterButtons() {
-            const categories = ['All', ...new Set(allProjects.map(p => p.category))];
-            filterButtonsContainer.innerHTML = categories.map(cat => `<button data-category="${cat}" class="filter-btn px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${cat === activeFilter ? 'filter-btn-active' : ''}">${cat}</button>`).join('');
+        function renderFilterNavigation() {
+            const categories = ['All', 'Favorites', ...new Set(allProjects.map(p => p.category))];
+            const categoryIcons = { 'All': 'layout-grid', 'Favorites': 'star', 'Web Apps': 'app-window', 'Tools': 'wrench', 'System Files': 'folder-cog' };
+            filterNavigation.innerHTML = categories.map(cat => `
+                <a href="#" data-category="${cat}" class="sidebar-filter-link flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--secondary-bg)] transition-colors ${cat === activeFilter ? 'active' : ''}">
+                    <i data-lucide="${categoryIcons[cat] || 'folder'}"></i><span>${cat}</span>
+                </a>
+            `).join('');
+            lucide.createIcons();
         }
         
         function filterAndSearch() {
             const searchTerm = searchInput.value.toLowerCase();
             let totalVisibleCards = 0;
-            document.querySelectorAll('.project-card').forEach(card => {
-                const titleMatch = card.dataset.title.includes(searchTerm);
-                const descMatch = card.dataset.description.includes(searchTerm);
-                const searchMatch = titleMatch || descMatch;
-                const categoryMatch = activeFilter === 'All' || card.dataset.category === activeFilter;
-                const isVisible = searchMatch && categoryMatch;
-                card.classList.toggle('hidden', !isVisible);
-                if (isVisible) totalVisibleCards++;
-            });
+            
+            // Adjust filtering for "Favorites" category
+            if (activeFilter === 'Favorites') {
+                allProjects.forEach(project => {
+                    const card = mainContent.querySelector(`.project-card[data-id="${project.id}"]`);
+                    if (!card) return;
+                    
+                    const isFavorited = favorites.includes(project.id);
+                    const titleMatch = card.dataset.title.includes(searchTerm);
+                    const descMatch = card.dataset.description.includes(searchTerm);
+                    const searchMatch = titleMatch || descMatch;
+
+                    const isVisible = isFavorited && searchMatch;
+                    card.classList.toggle('hidden', !isVisible);
+                    if (isVisible) totalVisibleCards++;
+                });
+            } else {
+                 document.querySelectorAll('.project-card').forEach(card => {
+                    const titleMatch = card.dataset.title.includes(searchTerm);
+                    const descMatch = card.dataset.description.includes(searchTerm);
+                    const searchMatch = titleMatch || descMatch;
+                    const categoryMatch = activeFilter === 'All' || card.dataset.category === activeFilter;
+                    const isVisible = searchMatch && categoryMatch;
+                    card.classList.toggle('hidden', !isVisible);
+                    if (isVisible) totalVisibleCards++;
+                });
+            }
+
             updateSectionVisibility();
 
             if (totalVisibleCards === 0 && allProjects.length > 0) {
@@ -492,8 +562,9 @@
         }
         
         // --- Modals & Forms ---
+        // showFileList, showProjectForm, showUserManagement, showConfirmation are unchanged
         function showFileList(project) {
-            const filesHTML = project.files && project.files.length > 0 ? project.files.map(file => `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--accent)] transition-colors duration-200"><i data-lucide="file-text" class="h-5 w-5 text-[var(--muted-foreground)]"></i><span>${file.title}</span></a></li>`).join('') : `<li class="p-3 text-[var(--muted-foreground)]">No files listed.</li>`;
+            const filesHTML = project.files && project.files.length > 0 ? project.files.map(file => `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--secondary-bg)] transition-colors duration-200"><i data-lucide="file-text" class="h-5 w-5 text-[var(--muted-foreground)]"></i><span>${file.title}</span></a></li>`).join('') : `<li class="p-3 text-[var(--muted-foreground)]">No files listed.</li>`;
             fileListModalEl.innerHTML = `<div class="modal-content glass-panel w-full max-w-md rounded-2xl shadow-2xl p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-2xl font-bold">${project.title}</h3><button class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"><i data-lucide="x"></i></button></div><ul class="space-y-1 max-h-80 overflow-y-auto">${filesHTML}</ul></div>`;
             fileListModalEl.classList.remove('opacity-0', 'pointer-events-none');
             lucide.createIcons();
@@ -504,7 +575,7 @@
             const colorPalette = ['bg-slate-200', 'bg-red-200', 'bg-orange-200', 'bg-amber-200', 'bg-yellow-200', 'bg-lime-200', 'bg-green-200', 'bg-emerald-200', 'bg-teal-200', 'bg-cyan-200', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-200', 'bg-violet-200', 'bg-purple-200', 'bg-fuchsia-200', 'bg-pink-200', 'bg-rose-200'];
             const iconList = ['database', 'layout-dashboard', 'bar-chart-3', 'box', 'folder', 'file-text', 'dollar-sign', 'file-check', 'clipboard-list', 'archive', 'settings', 'globe', 'server', 'pen-tool', 'shopping-cart', 'trending-up' ];
             let colorPickerHTML = colorPalette.map(c => `<button type="button" data-color="${c}" class="w-8 h-8 rounded-full ${c} ring-2 ring-transparent ring-offset-2 ring-offset-[var(--card-bg)] focus:ring-[var(--primary)] transition ${project.bgColor === c ? 'ring-[var(--primary)]' : ''}"></button>`).join('');
-            let iconPickerHTML = iconList.map(i => `<button type="button" data-icon="${i}" class="p-2 rounded-md hover:bg-[var(--accent)] transition ${project.iconName === i ? 'bg-[var(--accent)] text-[var(--primary)]' : 'text-[var(--muted-foreground)]'}"><i data-lucide="${i}"></i></button>`).join('');
+            let iconPickerHTML = iconList.map(i => `<button type="button" data-icon="${i}" class="p-2 rounded-md hover:bg-[var(--secondary-bg)] transition ${project.iconName === i ? 'bg-[var(--secondary-bg)] text-[var(--primary)]' : 'text-[var(--muted-foreground)]'}"><i data-lucide="${i}"></i></button>`).join('');
             const filesHTML = files.map((file, index) => `<div class="flex items-center space-x-2" data-file-index="${index}"><input type="text" placeholder="File Name" value="${file.title || ''}" class="input-base file-title-input w-1/2 rounded-md px-3 py-2"><input type="url" placeholder="File URL" value="${file.url || ''}" class="input-base file-url-input w-1/2 rounded-md px-3 py-2"><button type="button" class="remove-file-btn text-[var(--destructive)] hover:opacity-80 p-2">&times;</button></div>`).join('');
             
             projectFormModalEl.innerHTML = `
@@ -531,11 +602,11 @@
             const form = projectFormModalEl.querySelector('#project-form'); if (form) form.addEventListener('submit', handleFormSubmit);
             const typeSelect = projectFormModalEl.querySelector('select[name="type"]'); if (typeSelect) { typeSelect.addEventListener('change', () => { const isFolder = typeSelect.value === 'folder'; projectFormModalEl.querySelector('#files-container').classList.toggle('hidden', !isFolder); projectFormModalEl.querySelector('.url-container').classList.toggle('hidden', isFolder); });}
             projectFormModalEl.querySelector('#color-picker').addEventListener('click', (e) => { if(e.target.dataset.color) { projectFormModalEl.querySelector('[name="bgColor"]').value = e.target.dataset.color; projectFormModalEl.querySelectorAll('#color-picker button').forEach(b => b.classList.remove('ring-[var(--primary)]')); e.target.classList.add('ring-[var(--primary)]'); } });
-            projectFormModalEl.querySelector('#icon-picker').addEventListener('click', (e) => { const button = e.target.closest('button'); if(button && button.dataset.icon) { projectFormModalEl.querySelector('[name="iconName"]').value = button.dataset.icon; projectFormModalEl.querySelectorAll('#icon-picker button').forEach(b => b.classList.remove('bg-[var(--accent)]', 'text-[var(--primary)]')); button.classList.add('bg-[var(--accent)]', 'text-[var(--primary)]'); } });
+            projectFormModalEl.querySelector('#icon-picker').addEventListener('click', (e) => { const button = e.target.closest('button'); if(button && button.dataset.icon) { projectFormModalEl.querySelector('[name="iconName"]').value = button.dataset.icon; projectFormModalEl.querySelectorAll('#icon-picker button').forEach(b => b.classList.remove('bg-[var(--secondary-bg)]', 'text-[var(--primary)]')); button.classList.add('bg-[var(--secondary-bg)]', 'text-[var(--primary)]'); } });
             projectFormModalEl.classList.remove('opacity-0', 'pointer-events-none');
             lucide.createIcons();
         }
-       
+        
         async function showUserManagement() { /* ... content unchanged ... */ }
         function showConfirmation(message, onConfirm) { /* ... content unchanged ... */ }
 
@@ -568,6 +639,24 @@
         async function handleSignUpSubmit(e) { /* ... content unchanged ... */ }
         async function handleInviteSubmit(e) { /* ... content unchanged ... */ }
 
+        function addParallaxEventListeners() {
+            const cards = document.querySelectorAll('.project-card');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const { width, height } = rect;
+                    const rotateX = (y - height / 2) / (height / 2) * -10; // Max 10deg rotation
+                    const rotateY = (x - width / 2) / (width / 2) * 10;   // Max 10deg rotation
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                });
+            });
+        }
+
         // --- Global Event Listeners ---
         document.addEventListener('click', async (e) => {
             if (e.target.closest('.close-modal-btn')) e.target.closest('.modal').classList.add('opacity-0', 'pointer-events-none');
@@ -597,7 +686,17 @@
         signupForm.addEventListener('submit', handleSignUpSubmit);
         signOutBtn.addEventListener('click', () => signOut(auth));
         userManagementModalEl.addEventListener('submit', (e) => { if (e.target.id === 'invite-user-form') handleInviteSubmit(e); });
-        filterButtonsContainer.addEventListener('click', (e) => { if (e.target.tagName === 'BUTTON') { activeFilter = e.target.dataset.category; renderFilterButtons(); filterAndSearch(); } });
+        
+        filterNavigation.addEventListener('click', (e) => {
+            const link = e.target.closest('.sidebar-filter-link');
+            if (link) {
+                e.preventDefault();
+                activeFilter = link.dataset.category;
+                renderFilterNavigation(); // Re-render to update active class
+                filterAndSearch();
+            }
+        });
+
         searchInput.addEventListener('input', filterAndSearch);
         addProjectBtn.addEventListener('click', () => showProjectForm());
         manageUsersBtn.addEventListener('click', async () => {
@@ -605,8 +704,8 @@
             const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const invitesSnapshot = await getDocs(invitesCollection);
             const pendingInvites = invitesSnapshot.docs.map(doc => ({ email: doc.id, ...doc.data() }));
-            const invitesHTML = pendingInvites.length > 0 ? pendingInvites.map(invite => `<li class="flex justify-between items-center p-2 bg-[var(--secondary)] rounded-md"><div><span>${invite.email}</span><span class="text-xs uppercase font-semibold ml-2 px-2 py-1 rounded-full ${invite.role === 'admin' ? 'bg-red-500 text-white' : 'bg-gray-500 text-gray-200'}">${invite.role}</span></div><button data-email="${invite.email}" class="delete-invite-btn text-xl text-[var(--muted-foreground)] hover:text-[var(--destructive)] leading-none">&times;</button></li>`).join('') : `<li class="text-[var(--muted-foreground)] italic p-2">No pending invites.</li>`;
-            const usersHTML = allUsers.length > 0 ? allUsers.map(user => `<li class="flex justify-between items-center p-2 bg-[var(--secondary)] rounded-md"><span class="truncate pr-2" title="${user.email}">${user.email}</span><div class="flex items-center space-x-2"><select data-userid="${user.id}" class="user-role-select input-base rounded-md px-2 py-1 text-sm ${user.id === currentUser.uid ? 'opacity-50' : ''}" ${user.id === currentUser.uid ? 'disabled' : ''}><option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option></select><button data-userid="${user.id}" data-useremail="${user.email}" class="delete-user-btn text-[var(--muted-foreground)] hover:text-[var(--destructive)] p-1 ${user.id === currentUser.uid ? 'hidden' : ''}" ${user.id === currentUser.uid ? 'disabled' : ''}><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></li>`).join('') : `<li class="text-[var(--muted-foreground)] italic p-2">No users found.</li>`;
+            const invitesHTML = pendingInvites.length > 0 ? pendingInvites.map(invite => `<li class="flex justify-between items-center p-2 bg-[var(--secondary-bg)] rounded-md"><div><span>${invite.email}</span><span class="text-xs uppercase font-semibold ml-2 px-2 py-1 rounded-full ${invite.role === 'admin' ? 'bg-red-500 text-white' : 'bg-gray-500 text-gray-200'}">${invite.role}</span></div><button data-email="${invite.email}" class="delete-invite-btn text-xl text-[var(--muted-foreground)] hover:text-[var(--destructive)] leading-none">&times;</button></li>`).join('') : `<li class="text-[var(--muted-foreground)] italic p-2">No pending invites.</li>`;
+            const usersHTML = allUsers.length > 0 ? allUsers.map(user => `<li class="flex justify-between items-center p-2 bg-[var(--secondary-bg)] rounded-md"><span class="truncate pr-2" title="${user.email}">${user.email}</span><div class="flex items-center space-x-2"><select data-userid="${user.id}" class="user-role-select input-base rounded-md px-2 py-1 text-sm ${user.id === currentUser.uid ? 'opacity-50' : ''}" ${user.id === currentUser.uid ? 'disabled' : ''}><option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option></select><button data-userid="${user.id}" data-useremail="${user.email}" class="delete-user-btn text-[var(--muted-foreground)] hover:text-[var(--destructive)] p-1 ${user.id === currentUser.uid ? 'hidden' : ''}" ${user.id === currentUser.uid ? 'disabled' : ''}><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></li>`).join('') : `<li class="text-[var(--muted-foreground)] italic p-2">No users found.</li>`;
             userManagementModalEl.innerHTML = `<div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-2xl font-bold">Manage Users</h3><button type="button" class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"><i data-lucide="x"></i></button></div><div class="border-b border-[var(--card-border)] mb-4"><nav class="-mb-px flex space-x-4" aria-label="Tabs"><button data-tab="invites" class="tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Invites & Pending</button><button data-tab="users" class="tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]">All Users</button></nav></div><div id="invites-tab-content"><form id="invite-user-form"><h4 class="text-lg font-semibold mb-2">Invite New User</h4><p class="text-[var(--muted-foreground)] mb-4 text-sm">The user can create an account using the invited email.</p><div class="flex space-x-2"><input type="email" name="inviteEmail" placeholder="New User's Email" required class="input-base flex-grow w-full rounded-md px-3 py-2"><select name="inviteRole" class="input-base rounded-md px-3 py-2"><option value="viewer" selected>Viewer</option><option value="admin">Admin</option></select></div><button type="submit" class="w-full mt-3 btn-primary font-semibold px-4 py-2 rounded-md hover:opacity-90">Send Invite</button><p id="invite-status" class="text-sm text-center mt-3 h-4"></p></form><div class="mt-6"><h4 class="text-lg font-semibold mb-2">Pending Invites</h4><ul id="pending-invites-list" class="space-y-2 max-h-48 overflow-y-auto mt-2">${invitesHTML}</ul></div></div><div id="users-tab-content" class="hidden"><h4 class="text-lg font-semibold mb-2">Manage Existing Users</h4><ul id="all-users-list" class="space-y-2 max-h-64 overflow-y-auto mt-2">${usersHTML}</ul></div></div>`;
             userManagementModalEl.classList.remove('opacity-0', 'pointer-events-none');
             lucide.createIcons();
@@ -624,4 +723,3 @@
     </script>
 </body>
 </html>
-
