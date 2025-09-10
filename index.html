@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Central Hub Directory</title>
+    <link rel="icon" type="image/png" href="https://i.imgur.com/U4WPjmA.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -303,7 +304,6 @@
                     if (userRole === 'admin') adminControls.classList.remove('hidden');
                     
                     if (unsubscribeProjects) unsubscribeProjects();
-                    // Simplified query to avoid needing a composite index
                     const projectsQuery = query(projectsCollection, orderBy("title"));
                     unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
                         allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -458,33 +458,41 @@
             const categories = ['All', ...new Set(allProjects.map(p => p.category))];
             filterButtonsContainer.innerHTML = categories.map(cat => `<button data-category="${cat}" class="filter-btn px-4 py-2 text-sm font-medium rounded-full transition-colors duration-200 ${cat === activeFilter ? 'filter-btn-active' : ''}">${cat}</button>`).join('');
         }
+        
         function filterAndSearch() {
             const searchTerm = searchInput.value.toLowerCase();
-            let visibleCards = 0;
+            let totalVisibleCards = 0;
             document.querySelectorAll('.project-card').forEach(card => {
                 const titleMatch = card.dataset.title.includes(searchTerm);
                 const descMatch = card.dataset.description.includes(searchTerm);
-                const isVisible = titleMatch || descMatch;
+                const searchMatch = titleMatch || descMatch;
+
+                const categoryMatch = activeFilter === 'All' || card.dataset.category === activeFilter;
+
+                const isVisible = searchMatch && categoryMatch;
                 card.classList.toggle('hidden', !isVisible);
-                if(isVisible) visibleCards++;
+                if (isVisible) {
+                    totalVisibleCards++;
+                }
             });
             updateSectionVisibility();
 
-            if (visibleCards === 0 && allProjects.length > 0) {
+            if (totalVisibleCards === 0 && allProjects.length > 0) {
                 mainContent.querySelectorAll('.project-section').forEach(s => s.classList.add('section-hidden'));
                 emptyStateMessage.innerHTML = `<i data-lucide="search-x" class="h-16 w-16 mx-auto text-[var(--muted-foreground)]"></i><h3 class="mt-4 text-xl font-semibold">No Results Found</h3><p class="mt-2 text-[var(--muted-foreground)]">No projects matched your search for "${searchTerm}".</p>`;
                 emptyStateMessage.classList.remove('hidden');
                 lucide.createIcons();
-            } else {
+            } else if (allProjects.length === 0) {
+                 emptyStateMessage.innerHTML = `<i data-lucide="inbox" class="h-16 w-16 mx-auto text-[var(--muted-foreground)]"></i><h3 class="mt-4 text-xl font-semibold">No Projects Yet</h3><p class="mt-2 text-[var(--muted-foreground)]">Admins can add the first project to get started.</p>`;
+                emptyStateMessage.classList.remove('hidden');
+                lucide.createIcons();
+            }
+             else {
                 emptyStateMessage.classList.add('hidden');
             }
         }
         function updateSectionVisibility() {
             document.querySelectorAll('.project-section').forEach(section => {
-                const sectionCategory = section.id.replace('section-', '').replace(/-/g, ' ');
-                const isDynamicSection = ['Favorites'].includes(sectionCategory);
-                if (activeFilter !== 'All' && !isDynamicSection && activeFilter !== sectionCategory) { section.classList.add('section-hidden'); return; }
-                if (activeFilter !== 'All' && isDynamicSection) { section.classList.add('section-hidden'); return; }
                 const hasVisibleCards = section.querySelectorAll('.project-card:not(.hidden)').length > 0;
                 section.classList.toggle('section-hidden', !hasVisibleCards);
             });
