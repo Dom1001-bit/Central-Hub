@@ -802,8 +802,85 @@
             } finally { saveButton.disabled = false; saveButton.textContent = 'Save Project'; }
         }
         
-        async function handleSignUpSubmit(e) { /* ... content unchanged ... */ }
-        async function handleInviteSubmit(e) { /* ... content unchanged ... */ }
+        async function handleSignUpSubmit(e) {
+            e.preventDefault();
+            signupError.textContent = '';
+            const email = signupForm.email.value;
+            const password = signupForm.password.value;
+
+            try {
+                const inviteDocRef = doc(db, "invites", email);
+                const inviteDoc = await getDoc(inviteDocRef);
+
+                if (!inviteDoc.exists()) {
+                    throw new Error("You have not been invited. Please contact an admin.");
+                }
+
+                const { role } = inviteDoc.data();
+                
+                // Create user
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Batch write: create user doc and delete invite atomically
+                const batch = writeBatch(db);
+                const userDocRef = doc(db, "users", user.uid);
+                batch.set(userDocRef, { email, role });
+                batch.delete(inviteDocRef);
+                
+                await batch.commit();
+
+                // onAuthStateChanged will handle the UI transition
+            } catch (error) {
+                console.error("Sign up error:", error);
+                signupError.textContent = error.message.replace('Firebase: ', '');
+            }
+        }
+        async function handleInviteSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const inviteStatus = form.querySelector('#invite-status');
+            const email = form.inviteEmail.value;
+            const role = form.inviteRole.value;
+
+            if (!email) {
+                inviteStatus.textContent = 'Please enter an email.';
+                inviteStatus.className = 'text-[var(--destructive)] text-sm text-center mt-3 h-4';
+                return;
+            }
+
+            inviteStatus.textContent = 'Sending...';
+            inviteStatus.className = 'text-[var(--muted-foreground)] text-sm text-center mt-3 h-4';
+
+            try {
+                const inviteDoc = await getDoc(doc(db, "invites", email));
+                const usersQuery = query(collection(db, "users"), where("email", "==", email));
+                const userSnapshot = await getDocs(usersQuery);
+
+                if (!userSnapshot.empty || inviteDoc.exists()) {
+                    throw new Error("User already exists or has a pending invite.");
+                }
+
+                await setDoc(doc(db, "invites", email), {
+                    role: role,
+                    createdAt: serverTimestamp()
+                });
+                
+                inviteStatus.textContent = 'Invite sent successfully!';
+                inviteStatus.className = 'text-green-500 text-sm text-center mt-3 h-4';
+                form.reset();
+                // Refresh the modal content by re-triggering the click that opens it
+                const currentOpenModal = document.querySelector('#user-management-modal');
+                if(currentOpenModal && !currentOpenModal.classList.contains('opacity-0')) {
+                    manageUsersBtn.click();
+                }
+
+            } catch (error) {
+                console.error("Error sending invite:", error);
+                inviteStatus.textContent = error.message;
+                inviteStatus.className = 'text-[var(--destructive)] text-sm text-center mt-3 h-4';
+            }
+        }
 
         function addParallaxEventListeners() {
             const cards = document.querySelectorAll('.project-card');
@@ -933,4 +1010,5 @@
     </script>
 </body>
 </html>
+
 
