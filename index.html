@@ -30,24 +30,28 @@
             --ring: #2563eb;
             --mouse-x: 50%;
             --mouse-y: 50%;
+            --icon-stage-bg: rgba(255, 255, 255, 0.4);
+            --icon-stage-border: rgba(255, 255, 255, 0.3);
         }
 
         .dark {
             --background: #020817; /* slate-950 */
             --foreground: #f8fafc;
             --sidebar-bg: #0f172a; /* slate-900 */
-            --card-bg: rgba(22, 34, 57, 0.5); /* adjusted slate-900 */
-            --card-border: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(15, 23, 42, 0.6); /* adjusted slate-900 */
+            --card-border: rgba(255, 255, 255, 0.08);
             --card-foreground: #f8fafc;
             --primary-start: #60a5fa; /* blue-400 */
             --primary-end: #3b82f6; /* blue-500 */
             --primary-foreground: #f8fafc;
-            --secondary-bg: rgba(30, 41, 59, 0.5); /* slate-800 */
+            --secondary-bg: rgba(30, 41, 59, 0.6); /* slate-800 */
             --secondary-foreground: #f8fafc;
             --muted-foreground: #94a3b8; /* slate-400 */
             --destructive: #dc2626; /* red-600 */
             --destructive-foreground: #f8fafc;
             --ring: #3b82f6;
+            --icon-stage-bg: rgba(0, 0, 0, 0.3);
+            --icon-stage-border: rgba(255, 255, 255, 0.1);
         }
 
         body {
@@ -137,11 +141,15 @@
             position: absolute;
             inset: 0;
             border-radius: 16px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: var(--icon-stage-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--icon-stage-border);
             transform: rotateX(10deg) rotateY(-10deg);
-            box-shadow: 4px 8px 15px rgba(0,0,0,0.1);
+            box-shadow: 4px 8px 15px rgba(0,0,0,0.15);
+            transition: background 0.3s, border 0.3s;
+        }
+        .dark .icon-base-layer {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
         .icon-floating-layer {
             position: absolute;
@@ -150,7 +158,7 @@
             align-items: center;
             justify-content: center;
             transform: translateZ(30px) rotateX(10deg) rotateY(-10deg);
-            filter: drop-shadow(4px 10px 8px rgba(0,0,0,0.2));
+            filter: drop-shadow(4px 10px 8px rgba(0,0,0,0.3));
             color: var(--foreground);
         }
         
@@ -471,10 +479,8 @@
                     lucide.createIcons();
                     
                     if (unsubscribeProjects) unsubscribeProjects();
-                    // RULE 2: Using simple collection query, sorting in JS memory
                     const projectsQuery = projectsCollection;
                     unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
-                        // Map and sort in memory by order or title
                         allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         allProjects.sort((a, b) => {
                             const orderA = a.order ?? 999;
@@ -552,7 +558,6 @@
             const staticCategories = [...new Set(allProjects.map(p => p.category))];
             staticCategories.sort((a, b) => { if (a === 'Web Apps') return -1; if (b === 'Web Apps') return 1; return a.localeCompare(b); });
             
-            // Usage Analytics: Trending Section
             const trendingProjects = [...allProjects].sort((a, b) => (b.clickCount || 0) - (a.clickCount || 0)).slice(0, 4);
             if (trendingProjects.length > 0 && trendingProjects.some(p => (p.clickCount || 0) > 0)) {
                 createSection('Trending Tools');
