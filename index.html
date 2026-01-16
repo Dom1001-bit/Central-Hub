@@ -55,7 +55,7 @@
             background-color: var(--background);
             color: var(--foreground);
             transition: background-color 0.3s, color 0.3s;
-            overflow: hidden; /* Prevent scrollbars on body */
+            overflow: hidden;
         }
 
         h2, h3 {
@@ -86,7 +86,6 @@
             to { transform: translate(100px, 100px) rotate(90deg) scale(1.2); }
         }
         
-        /* Glassmorphism Styles */
         .glass-panel {
             background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--card-border); color: var(--card-foreground);
         }
@@ -111,20 +110,54 @@
         }
         .btn-destructive { background-color: var(--destructive); color: var(--destructive-foreground); }
 
-        /* Card Parallax Hover Effect */
+        /* Card Parallax & Container Fixes */
         .project-card {
-            transform-style: preserve-3d; transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            transform-style: preserve-3d; transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, opacity 0.3s;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .project-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
         }
         .project-card .card-content, .project-card .card-actions, .project-card .card-tags {
-            transform: translateZ(20px); /* Bring content forward */
+            transform: translateZ(20px);
         }
-        .project-card .card-icon-wrapper {
-            transform: translateZ(50px); /* Bring icon even more forward */
+
+        /* Modern 3D Icon Stage */
+        .card-icon-stage {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            perspective: 500px;
+            transform-style: preserve-3d;
+            flex-shrink: 0;
+        }
+        .icon-base-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transform: rotateX(10deg) rotateY(-10deg);
+            box-shadow: 4px 8px 15px rgba(0,0,0,0.1);
+        }
+        .icon-floating-layer {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateZ(30px) rotateX(10deg) rotateY(-10deg);
+            filter: drop-shadow(4px 10px 8px rgba(0,0,0,0.2));
+            color: var(--foreground);
         }
         
         .favorite-btn.favorited svg { fill: #facc15; stroke: #facc15; }
         .notification-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; background-color: var(--destructive); border: 2px solid var(--card-bg); }
         .tab-btn.active { border-color: var(--primary-end); color: var(--primary-start); }
+        
         .sidebar-filter-link.active { 
             background-image: linear-gradient(to right, var(--primary-start), var(--primary-end));
             color: var(--primary-foreground);
@@ -134,39 +167,61 @@
             transform: translateX(4px);
         }
 
-        /* Modal Transitions */
-        .modal {
-            transition: opacity 0.3s ease-in-out;
+        /* Live pulsating dot */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            flex-shrink: 0;
         }
-        .modal .modal-content {
-            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            transform: scale(0.95);
-            opacity: 0;
+        .status-dot.online {
+            background-color: #22c55e;
+            box-shadow: 0 0 0 rgba(34, 197, 94, 0.4);
+            animation: pulse-green 2s infinite;
         }
-        .modal:not(.opacity-0) .modal-content {
-            transform: scale(1);
-            opacity: 1;
+        .status-dot.offline { background-color: #ef4444; }
+        .status-dot.checking { background-color: #94a3b8; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
         }
 
-        /* Tagging System */
+        .modal { transition: opacity 0.3s ease-in-out; }
+        .modal .modal-content {
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            transform: scale(0.95); opacity: 0;
+        }
+        .modal:not(.opacity-0) .modal-content { transform: scale(1); opacity: 1; }
+
+        .command-palette-item.active {
+            background-color: var(--primary-start);
+            color: var(--primary-foreground);
+        }
+
         .tag-badge {
             background-color: var(--secondary-bg);
             color: var(--muted-foreground);
             border: 1px solid var(--card-border);
             cursor: pointer;
             transition: all 0.2s;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .tag-badge:hover {
-            background-color: var(--primary-start);
-            color: var(--primary-foreground);
-            border-color: transparent;
-        }
+        
+        .tab-btn { border-bottom-width: 2px; }
+        .tab-btn.active { border-color: var(--primary-end); color: var(--primary-start); }
+
         .tag-input-badge {
-            display: inline-flex; align-items: center; background-color: var(--primary-start); color: var(--primary-foreground); padding: 2px 8px; border-radius: 9999px; font-size: 0.875rem; margin: 2px;
+            display: inline-flex; align-items: center; background-color: var(--primary-start); color: var(--primary-foreground); padding: 2px 8px; border-radius: 9999px; font-size: 0.75rem; margin: 2px;
         }
         .tag-input-badge button { margin-left: 6px; font-weight: bold; }
 
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background-color: rgba(128, 128, 128, 0.3); border-radius: 10px; }
@@ -180,12 +235,29 @@
         <div class="color-blob blob-3"></div>
     </div>
 
+    <!-- Omni-Search Command Palette -->
+    <div id="command-palette" class="modal fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] bg-black/40 backdrop-blur-sm p-4 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="modal-content glass-panel w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh]">
+            <div class="p-4 border-b border-[var(--card-border)] flex items-center space-x-3">
+                <i data-lucide="search" class="text-[var(--muted-foreground)]"></i>
+                <input type="text" id="command-input" placeholder="Type a command or search projects..." class="bg-transparent w-full text-lg focus:outline-none" autocomplete="off">
+                <div class="px-2 py-1 rounded bg-[var(--secondary-bg)] text-xs font-mono text-[var(--muted-foreground)] border border-[var(--card-border)]">ESC</div>
+            </div>
+            <div id="command-results" class="overflow-y-auto p-2 space-y-4"></div>
+            <div class="p-3 bg-[var(--secondary-bg)] border-t border-[var(--card-border)] flex justify-between items-center text-[var(--muted-foreground)] text-xs">
+                <div class="flex items-center space-x-4">
+                    <span><kbd class="px-1.5 py-0.5 rounded border bg-[var(--background)]">↑↓</kbd> Navigate</span>
+                    <span><kbd class="px-1.5 py-0.5 rounded border bg-[var(--background)]">↵</kbd> Select</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Auth Container -->
     <div id="auth-container" class="w-full min-h-screen flex items-center justify-center p-4">
-        <!-- Auth content remains the same -->
         <div class="glass-panel w-full max-w-md mx-auto rounded-2xl shadow-2xl p-8">
-            <div class="flex justify-center items-center mb-6">
-                <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-20" onerror="this.style.display='none'">
+            <div class="flex justify-center items-center mb-8">
+                <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-16" onerror="this.style.display='none'">
             </div>
             
             <form id="login-form">
@@ -199,7 +271,7 @@
                     <label for="password" class="block text-sm font-medium mb-2">Password</label>
                     <input type="password" id="password" name="password" required class="input-base w-full rounded-lg px-3 py-2 focus:outline-none focus:ring-2 transition-all">
                 </div>
-                <button type="submit" class="btn-primary w-full font-semibold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ring)] transition-colors">Sign In</button>
+                <button type="submit" class="btn-primary w-full font-semibold py-2.5 px-4 rounded-lg transition-colors">Sign In</button>
                 <p id="auth-error" class="text-[var(--destructive)] text-center text-sm mt-4 h-4"></p>
             </form>
 
@@ -214,7 +286,7 @@
                     <label for="signup-password" class="block text-sm font-medium mb-2">Password</label>
                     <input type="password" id="signup-password" name="password" required class="input-base w-full rounded-lg px-3 py-2 focus:outline-none focus:ring-2 transition-all">
                 </div>
-                <button type="submit" class="btn-primary w-full font-semibold py-2.5 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--ring)] transition-colors">Sign Up</button>
+                <button type="submit" class="btn-primary w-full font-semibold py-2.5 px-4 rounded-lg transition-colors">Sign Up</button>
                 <p id="signup-error" class="text-[var(--destructive)] text-center text-sm mt-4 h-4"></p>
             </form>
 
@@ -226,16 +298,13 @@
 
     <!-- Main App Container -->
     <div id="app-container" class="hidden h-screen w-full flex">
-        <!-- Sidebar -->
         <aside id="sidebar" class="w-64 bg-[var(--sidebar-bg)] border-r border-[var(--card-border)] flex flex-col p-4">
-            <div class="flex flex-col items-center space-y-2 mb-8">
+            <div class="flex flex-col items-center space-y-4 mb-8 pt-4">
                 <img src="https://i.imgur.com/GQya5pg.png" alt="Brand Logo" class="h-12" onerror="this.style.display='none'">
-                <h1 class="text-xl font-bold">Central Hub</h1>
+                <h1 class="text-xl font-bold tracking-tight">Central Hub</h1>
             </div>
             
-            <nav id="filter-navigation" class="flex-grow space-y-2">
-                <!-- Filter links will be dynamically inserted here -->
-            </nav>
+            <nav id="filter-navigation" class="flex-grow space-y-2"></nav>
 
             <div class="mt-auto pt-4 border-t border-[var(--card-border)] space-y-2">
                 <div id="user-profile-container" class="mb-2"></div>
@@ -248,14 +317,14 @@
                     <i data-lucide="log-out"></i>
                     <span>Sign Out</span>
                 </button>
+                <div class="px-3 py-2 text-[10px] text-center text-[var(--muted-foreground)]">Press <kbd class="px-1 border rounded bg-[var(--background)]">⌘K</kbd> for palette</div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <div id="main-content-wrapper" class="flex-1 flex flex-col h-screen">
-            <header class="flex-shrink-0 bg-[var(--background)]/80 backdrop-blur-sm border-b border-[var(--card-border)] p-4 flex items-center justify-between">
+        <div id="main-content-wrapper" class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="flex-shrink-0 relative z-30 bg-[var(--background)]/80 backdrop-blur-sm border-b border-[var(--card-border)] p-4 flex items-center justify-between">
                 <div class="relative w-full max-w-md">
-                   <input type="text" id="search-input" placeholder="Search by name, description, or tag..." class="input-base w-full pl-10 pr-4 py-2 rounded-full text-sm focus:outline-none focus:ring-2 transition-all">
+                   <input type="text" id="search-input" placeholder="Search projects..." class="input-base w-full pl-10 pr-4 py-2 rounded-full text-sm focus:outline-none focus:ring-2 transition-all">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i data-lucide="search" class="h-5 w-5 text-[var(--muted-foreground)]"></i>
                     </div>
@@ -275,7 +344,7 @@
                             <i data-lucide="bell"></i>
                             <div id="notification-dot" class="hidden notification-dot"></div>
                         </button>
-                        <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 glass-panel rounded-lg shadow-xl z-20">
+                        <div id="notification-panel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 glass-panel rounded-lg shadow-xl z-50">
                             <div class="p-3 border-b border-[var(--card-border)] flex justify-between items-center">
                                 <h3 class="font-semibold">Notifications</h3>
                                 <button id="clear-notifications-btn" class="text-sm text-[var(--primary-start)] hover:underline">Mark all as read</button>
@@ -288,11 +357,11 @@
             <main id="main-content" class="flex-1 overflow-y-auto p-6 md:p-8">
                 <div id="loading-indicator" class="text-center py-16">
                      <div role="status" class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--primary-start)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                    <p class="mt-4 text-lg text-[var(--muted-foreground)]">Loading projects...</p>
+                    <p class="mt-4 text-lg text-[var(--muted-foreground)]">Syncing Central Hub...</p>
                 </div>
                  <div id="empty-state-message" class="hidden text-center py-16"></div>
                  <footer class="text-center mt-16 text-[var(--muted-foreground)]/80 pb-8">
-                    <p>Created by Dom. All data is live.</p>
+                    <p>Created by Dom. Secure access only.</p>
                 </footer>
             </main>
         </div>
@@ -302,14 +371,14 @@
     <div id="file-list-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
     <div id="project-form-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
     <div id="user-management-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
-    <div id="confirm-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
+    <div id="confirm-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none transition-all"></div>
     <div id="project-details-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
     <div id="user-profile-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 opacity-0 pointer-events-none"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, getDoc, setDoc, getDocs, writeBatch, serverTimestamp, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, addDoc, updateDoc, deleteDoc, getDoc, setDoc, getDocs, writeBatch, serverTimestamp, query, orderBy, limit, where, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
         
         const firebaseConfig = {
             apiKey: "AIzaSyBpU5pgitYuVLh1mAYHdLqt_CPkyyqVXms",
@@ -329,7 +398,6 @@
         const invitesCollection = collection(db, "invites");
         const notificationsCollection = collection(db, "notifications");
 
-        // --- DOM Elements ---
         const authContainer = document.getElementById('auth-container');
         const appContainer = document.getElementById('app-container');
         const mainContent = document.getElementById('main-content');
@@ -358,13 +426,21 @@
         const notificationList = document.getElementById('notification-list');
         const notificationDot = document.getElementById('notification-dot');
         const clearNotificationsBtn = document.getElementById('clear-notifications-btn');
+
+        const commandPalette = document.getElementById('command-palette');
+        const commandInput = document.getElementById('command-input');
+        const commandResults = document.getElementById('command-results');
         
-        // --- App State ---
-        let allProjects = []; let activeFilter = 'All'; let currentUser = null;
-        let userRole = null; let unsubscribeProjects = null; let unsubscribeNotifications = null;
-        let favorites = []; let notifications = [];
+        let allProjects = []; 
+        let activeFilter = 'All'; 
+        let currentUser = null;
+        let userRole = null; 
+        let unsubscribeProjects = null; 
+        let unsubscribeNotifications = null;
+        let favorites = []; 
+        let notifications = [];
+        let linkStatusMap = new Map(); 
         
-        // --- Local Storage Helpers ---
         const getLocalStorageKey = (key) => currentUser ? `${key}_${currentUser.uid}` : null;
         const saveToLocalStorage = (key, data) => { const userKey = getLocalStorageKey(key); if(userKey) localStorage.setItem(userKey, JSON.stringify(data)); };
         const loadFromLocalStorage = (key, defaultValue = '[]') => {
@@ -373,13 +449,9 @@
             try {
                 const item = localStorage.getItem(userKey);
                 return item ? JSON.parse(item) : JSON.parse(defaultValue);
-            } catch (e) {
-                console.warn(`Could not parse local storage item ${userKey}:`, e);
-                return JSON.parse(defaultValue);
-            }
+            } catch (e) { return JSON.parse(defaultValue); }
         };
         
-        // --- Authentication ---
         onAuthStateChanged(auth, async (user) => {
             try {
                 const userProfileContainer = document.getElementById('user-profile-container');
@@ -391,24 +463,29 @@
                     if (userRole === 'admin') adminControls.classList.remove('hidden');
 
                     userProfileContainer.innerHTML = `
-                        <button id="user-profile-btn" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-left bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors">
-                            <i data-lucide="user-circle-2"></i>
-                            <span class="truncate flex-1">${currentUser.email}</span>
+                        <button id="user-profile-btn" class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-left bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors overflow-hidden">
+                            <i data-lucide="user-circle-2" class="flex-shrink-0"></i>
+                            <span class="truncate flex-1 min-w-0">${currentUser.email}</span>
                         </button>
                     `;
                     lucide.createIcons();
                     
                     if (unsubscribeProjects) unsubscribeProjects();
-                    const projectsQuery = query(projectsCollection, orderBy("title"));
+                    // RULE 2: Using simple collection query, sorting in JS memory
+                    const projectsQuery = projectsCollection;
                     unsubscribeProjects = onSnapshot(projectsQuery, (snapshot) => {
+                        // Map and sort in memory by order or title
                         allProjects = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        allProjects.sort((a, b) => {
+                            const orderA = a.order ?? 999;
+                            const orderB = b.order ?? 999;
+                            if (orderA !== orderB) return orderA - orderB;
+                            return (a.title || "").localeCompare(b.title || "");
+                        });
                         loadingIndicator.style.display = 'none';
                         renderAll();
-                    }, (error) => {
-                        console.error("Error with projects listener:", error);
-                        loadingIndicator.style.display = 'none';
-                        mainContent.innerHTML = `<p class="text-[var(--destructive)] text-center">Failed to load projects.</p>`;
-                    });
+                        triggerHealthChecks(); 
+                    }, () => { loadingIndicator.style.display = 'none'; });
 
                     if (unsubscribeNotifications) unsubscribeNotifications();
                     const notificationsQuery = query(notificationsCollection, orderBy("timestamp", "desc"), limit(20));
@@ -416,36 +493,73 @@
                         notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         renderNotifications();
                     });
-
                 } else {
                     currentUser = null; userRole = null;
-                    if (unsubscribeProjects) { unsubscribeProjects(); unsubscribeProjects = null; }
-                    if (unsubscribeNotifications) { unsubscribeNotifications(); unsubscribeNotifications = null; }
+                    if (unsubscribeProjects) unsubscribeProjects();
+                    if (unsubscribeNotifications) unsubscribeNotifications();
                     allProjects = []; mainContent.innerHTML = '';
-                    userProfileContainer.innerHTML = '';
                     authContainer.style.display = 'flex'; appContainer.classList.add('hidden');
-                    adminControls.classList.add('hidden');
                 }
-            } catch (error) {
-                console.error("Critical error during auth state change:", error);
-                signOut(auth);
-            }
+            } catch (error) { signOut(auth); }
         });
 
         async function fetchUserRole(uid) {
             const userDoc = await getDoc(doc(db, "users", uid));
             userRole = userDoc.exists() ? userDoc.data().role : 'viewer';
         }
+
+        async function checkUrlHealth(url) {
+            if (!url) return 'offline';
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); 
+                await fetch(url, { mode: 'no-cors', signal: controller.signal });
+                clearTimeout(timeoutId);
+                return 'online';
+            } catch (e) { return 'offline'; }
+        }
+
+        async function triggerHealthChecks() {
+            allProjects.forEach(async (project) => {
+                if (project.type === 'webapp' && project.url) {
+                    const status = await checkUrlHealth(project.url);
+                    linkStatusMap.set(project.id, status);
+                    updateProjectStatusUI(project.id, status);
+                }
+            });
+        }
+
+        function updateProjectStatusUI(projectId, status) {
+            const dot = document.querySelector(`.project-card[data-id="${projectId}"] .status-dot`);
+            if (dot) {
+                dot.className = `status-dot ${status}`;
+                dot.title = status.charAt(0).toUpperCase() + status.slice(1);
+            }
+        }
+
+        async function trackClick(projectId) {
+            try {
+                await updateDoc(doc(db, "projects", projectId), {
+                    clickCount: increment(1)
+                });
+            } catch (e) { console.error("Analytics Error:", e); }
+        }
         
-        // --- Rendering ---
         function renderAll() {
             mainContent.querySelectorAll('.project-section').forEach(el => el.remove());
             emptyStateMessage.classList.add('hidden');
-
+            
             const staticCategories = [...new Set(allProjects.map(p => p.category))];
             staticCategories.sort((a, b) => { if (a === 'Web Apps') return -1; if (b === 'Web Apps') return 1; return a.localeCompare(b); });
-            const allCategories = ['Favorites', ...staticCategories];
+            
+            // Usage Analytics: Trending Section
+            const trendingProjects = [...allProjects].sort((a, b) => (b.clickCount || 0) - (a.clickCount || 0)).slice(0, 4);
+            if (trendingProjects.length > 0 && trendingProjects.some(p => (p.clickCount || 0) > 0)) {
+                createSection('Trending Tools');
+                populateGrid('Trending Tools', trendingProjects);
+            }
 
+            const allCategories = ['Favorites', ...staticCategories];
             allCategories.forEach(createSection);
             
             const projectMap = new Map(allProjects.map(p => [p.id, p]));
@@ -461,6 +575,7 @@
             filterAndSearch();
             lucide.createIcons();
             addParallaxEventListeners();
+            if (userRole === 'admin') addDragAndDropListeners();
         }
 
         function createSection(category) {
@@ -480,11 +595,9 @@
             grid.innerHTML = '';
             if (items.length === 0) {
                 if (category === 'Favorites') {
-                    grid.innerHTML = `<p class="text-[var(--muted-foreground)] italic col-span-full">No items have been favorited yet.</p>`;
+                    grid.innerHTML = `<p class="text-[var(--muted-foreground)] italic col-span-full">No items favorited yet.</p>`;
                     section.classList.remove('section-hidden');
-                } else {
-                    section.classList.add('section-hidden');
-                }
+                } else { section.classList.add('section-hidden'); }
                 return;
             }
             section.classList.remove('section-hidden');
@@ -500,28 +613,37 @@
             const card = document.createElement('div');
             card.className = `project-card glass-panel opacity-0 translate-y-5 block p-5 rounded-2xl shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl hover:border-[var(--primary-start)] cursor-pointer`;
             card.dataset.id = project.id; 
-            card.dataset.title = project.title.toLowerCase(); 
-            card.dataset.description = project.description ? project.description.toLowerCase() : '';
+            card.dataset.title = (project.title || '').toLowerCase(); 
+            card.dataset.description = (project.description || '').toLowerCase();
             card.dataset.category = project.category;
             card.dataset.tags = project.tags ? project.tags.join(',') : '';
-
-            const isFavorited = favorites.includes(project.id);
-            const adminButtonsHTML = userRole === 'admin' ? `<button class="edit-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors" title="Edit"><i data-lucide="pencil" class="h-4 w-4"></i></button><button class="delete-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--destructive)] hover:text-white transition-colors" title="Delete"><i data-lucide="trash-2" class="h-4 w-4"></i></button>` : '';
-            const tagsHTML = project.tags && project.tags.length > 0 
-                ? `<div class="card-tags mt-4 flex flex-wrap gap-2">${project.tags.map(tag => `<span class="tag-badge text-xs font-medium px-2.5 py-1 rounded-full">${tag}</span>`).join('')}</div>`
-                : '';
+            if (userRole === 'admin') card.draggable = true;
             
+            const status = project.type === 'webapp' ? (linkStatusMap.get(project.id) || 'checking') : null;
+            const statusHTML = status ? `<span class="status-dot ${status}" title="${status}"></span>` : '';
+            const isFavorited = favorites.includes(project.id);
+            const adminButtonsHTML = userRole === 'admin' ? `<button class="edit-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--card-border)]" title="Edit"><i data-lucide="pencil" class="h-4 w-4"></i></button><button class="delete-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--destructive)] hover:text-white" title="Delete"><i data-lucide="trash-2" class="h-4 w-4"></i></button>` : '';
+            const tagsHTML = project.tags && project.tags.length > 0 
+                ? `<div class="card-tags mt-4 flex flex-wrap gap-2 overflow-hidden">${project.tags.map(tag => `<span class="tag-badge text-[10px] font-medium px-2 py-0.5 rounded-full">${tag}</span>`).join('')}</div>`
+                : '';
+
             card.innerHTML = `
-            <div class="relative h-full flex flex-col pointer-events-none">
-                <div class="card-content flex-grow flex items-start space-x-4">
-                    <div class="card-icon-wrapper flex-shrink-0 w-16 h-16 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg text-slate-800">${project.icon || ''}</div>
-                    <div class="flex-1">
-                        <h3 class="text-lg font-semibold">${project.title}</h3>
-                        <p class="mt-1 text-sm text-[var(--muted-foreground)]">${project.description || ''}</p>
+            <div class="relative h-full flex flex-col pointer-events-none overflow-hidden">
+                <div class="card-content flex-grow flex items-start space-x-4 min-w-0">
+                    <div class="card-icon-stage">
+                        <div class="icon-base-layer ${project.bgColor || 'bg-slate-200'}"></div>
+                        <div class="icon-floating-layer">${project.icon || ''}</div>
+                    </div>
+                    <div class="flex-1 min-w-0 overflow-hidden">
+                        <div class="flex items-center">
+                            ${statusHTML}
+                            <h3 class="text-base font-bold truncate break-words flex-1">${project.title}</h3>
+                        </div>
+                        <p class="mt-1 text-xs text-[var(--muted-foreground)] line-clamp-2 break-words leading-relaxed">${project.description || ''}</p>
                     </div>
                 </div>
                 ${tagsHTML}
-                <div class="card-actions absolute top-[-15px] right-[-15px] flex space-x-1 pointer-events-auto">
+                <div class="card-actions absolute top-[-10px] right-[-10px] flex space-x-1 pointer-events-auto">
                     <button class="favorite-btn p-2 rounded-full bg-[var(--secondary-bg)] hover:bg-[var(--card-border)] transition-colors ${isFavorited ? 'favorited' : ''}" title="Favorite"><svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></button>
                     ${adminButtonsHTML}
                 </div>
@@ -529,486 +651,607 @@
             return card;
         }
 
-        // --- Notifications ---
+        // Drag and Drop Logic
+        let draggedCardId = null;
+        function addDragAndDropListeners() {
+            const cards = document.querySelectorAll('.project-card');
+            cards.forEach(card => {
+                card.ondragstart = (e) => {
+                    draggedCardId = card.dataset.id;
+                    card.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', draggedCardId);
+                };
+                card.ondragend = () => card.classList.remove('dragging');
+                card.ondragover = (e) => e.preventDefault();
+                card.ondrop = async (e) => {
+                    e.preventDefault();
+                    const targetId = card.dataset.id;
+                    if (draggedCardId === targetId) return;
+
+                    const category = card.dataset.category;
+                    const items = allProjects.filter(p => p.category === category);
+                    const draggedIdx = items.findIndex(p => p.id === draggedCardId);
+                    const targetIdx = items.findIndex(p => p.id === targetId);
+                    
+                    const [movedItem] = items.splice(draggedIdx, 1);
+                    items.splice(targetIdx, 0, movedItem);
+
+                    const batch = writeBatch(db);
+                    items.forEach((item, idx) => {
+                        batch.update(doc(db, "projects", item.id), { order: idx });
+                    });
+                    await batch.commit();
+                };
+            });
+        }
+
+        // Command Palette Logic
+        let selectedIndex = 0;
+        let commandItems = [];
+
+        function openCommandPalette() {
+            commandPalette.classList.remove('opacity-0', 'pointer-events-none');
+            commandInput.focus();
+            renderCommandResults();
+        }
+
+        function closeCommandPalette() {
+            commandPalette.classList.add('opacity-0', 'pointer-events-none');
+            commandInput.value = '';
+        }
+
+        function renderCommandResults() {
+            const queryText = commandInput.value.toLowerCase();
+            commandResults.innerHTML = '';
+            commandItems = [];
+
+            const actions = [
+                { id: 'toggle-theme', title: 'Toggle Dark Mode', category: 'Actions', icon: 'moon', action: () => themeSwitcher.click() },
+                { id: 'sign-out', title: 'Sign Out', category: 'Actions', icon: 'log-out', action: () => signOutBtn.click() }
+            ];
+            if (userRole === 'admin') {
+                actions.push(
+                    { id: 'add-project', title: 'Add New Project', category: 'Admin', icon: 'plus', action: () => addProjectBtn.click() },
+                    { id: 'manage-users', title: 'Manage Users', category: 'Admin', icon: 'users', action: () => manageUsersBtn.click() }
+                );
+            }
+
+            const navigation = ['All', 'Favorites', ...new Set(allProjects.map(p => p.category))].map(cat => ({
+                id: `nav-${cat}`, title: `Go to ${cat}`, category: 'Navigation', icon: 'navigation', action: () => {
+                    const l = document.querySelector(`.sidebar-filter-link[data-category="${cat}"]`);
+                    if (l) l.click();
+                }
+            }));
+
+            const projects = allProjects.map(p => ({
+                id: `project-${p.id}`, title: p.title, description: p.description, category: 'Projects', icon: 'app-window', action: () => {
+                    const card = document.querySelector(`.project-card[data-id="${p.id}"]`);
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.click();
+                    }
+                }
+            }));
+
+            const combined = [...actions, ...navigation, ...projects].filter(item => 
+                item.title.toLowerCase().includes(queryText) || (item.description && item.description.toLowerCase().includes(queryText))
+            );
+
+            if (combined.length === 0) {
+                commandResults.innerHTML = '<div class="p-8 text-center text-[var(--muted-foreground)]">No results found.</div>';
+                return;
+            }
+
+            commandItems = combined;
+            const categories = [...new Set(combined.map(i => i.category))];
+
+            categories.forEach(cat => {
+                const group = document.createElement('div');
+                group.innerHTML = `<h4 class="px-3 py-1 text-[10px] uppercase font-bold text-[var(--muted-foreground)] tracking-wider">${cat}</h4>`;
+                const catItems = combined.filter(i => i.category === cat);
+                catItems.forEach(item => {
+                    const globalIdx = combined.indexOf(item);
+                    const el = document.createElement('div');
+                    el.className = `command-palette-item flex items-center space-x-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${globalIdx === selectedIndex ? 'active' : ''}`;
+                    el.innerHTML = `
+                        <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium truncate">${item.title}</div>
+                            ${item.description ? `<div class="text-[10px] opacity-70 truncate">${item.description}</div>` : ''}
+                        </div>
+                    `;
+                    el.onclick = () => { item.action(); closeCommandPalette(); };
+                    group.appendChild(el);
+                });
+                commandResults.appendChild(group);
+            });
+            lucide.createIcons();
+        }
+
+        commandInput.onkeydown = (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex + 1) % commandItems.length;
+                renderCommandResults();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + commandItems.length) % commandItems.length;
+                renderCommandResults();
+            } else if (e.key === 'Enter') {
+                if (commandItems[selectedIndex]) {
+                    commandItems[selectedIndex].action();
+                    closeCommandPalette();
+                }
+            } else if (e.key === 'Escape') closeCommandPalette();
+        };
+
+        commandInput.oninput = () => { selectedIndex = 0; renderCommandResults(); };
+        window.addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCommandPalette(); }});
+        commandPalette.onclick = (e) => { if (e.target === commandPalette) closeCommandPalette(); };
+
         function renderNotifications() {
-            const lastSeenTimestamp = loadFromLocalStorage('lastSeenNotification', '0');
+            const lastSeen = loadFromLocalStorage('lastSeenNotification', '0');
             let hasUnread = false;
             if (notifications.length === 0) {
-                notificationList.innerHTML = `<li class="p-4 text-center text-sm text-[var(--muted-foreground)]">No new notifications.</li>`;
+                notificationList.innerHTML = `<li class="p-4 text-center text-sm text-[var(--muted-foreground)]">No notifications.</li>`;
             } else {
                 notificationList.innerHTML = notifications.map(notif => {
-                    const isUnread = notif.timestamp && notif.timestamp.toMillis() > lastSeenTimestamp;
+                    const isUnread = notif.timestamp && notif.timestamp.toMillis() > lastSeen;
                     if(isUnread) hasUnread = true;
-                    return `<li class="border-b border-[var(--card-border)] last:border-b-0"><div class="p-3 hover:bg-[var(--card-border)] rounded-md transition-colors"><p class="font-medium">${notif.message}</p><p class="text-xs text-[var(--muted-foreground)] mt-1">${timeAgo(notif.timestamp)} by ${notif.userEmail}</p></div></li>`;
+                    return `<li class="border-b border-[var(--card-border)] last:border-b-0"><div class="p-3 hover:bg-[var(--card-border)] rounded-md transition-colors"><p class="font-medium text-xs">${notif.message}</p><p class="text-[10px] text-[var(--muted-foreground)] mt-1">${timeAgo(notif.timestamp)}</p></div></li>`;
                 }).join('');
             }
             notificationDot.classList.toggle('hidden', !hasUnread);
         }
+
         function timeAgo(timestamp) {
             if (!timestamp) return 'Just now';
-            const now = Date.now();
-            const seconds = Math.floor((now - timestamp.toMillis()) / 1000);
-            let interval = seconds / 31536000; if (interval > 1) return Math.floor(interval) + " years ago";
-            interval = seconds / 2592000; if (interval > 1) return Math.floor(interval) + " months ago";
-            interval = seconds / 86400; if (interval > 1) return Math.floor(interval) + " days ago";
-            interval = seconds / 3600; if (interval > 1) return Math.floor(interval) + " hours ago";
-            interval = seconds / 60; if (interval > 1) return Math.floor(interval) + " minutes ago";
-            return "Just now";
+            const seconds = Math.floor((Date.now() - timestamp.toMillis()) / 1000);
+            if (seconds < 60) return "Just now";
+            if (seconds < 3600) return Math.floor(seconds / 60) + "m ago";
+            if (seconds < 86400) return Math.floor(seconds / 3600) + "h ago";
+            return Math.floor(seconds / 86400) + "d ago";
         }
+
         async function createNotification(action, title) {
-            const message = `${action}: "${title}"`;
-            try { await addDoc(notificationsCollection, { message, userEmail: currentUser.email, timestamp: serverTimestamp(), }); } 
-            catch (error) { console.error("Error creating notification: ", error); }
+            try { await addDoc(notificationsCollection, { message: `${action}: "${title}"`, userEmail: currentUser.email, timestamp: serverTimestamp() }); } catch (e) {}
         }
-        clearNotificationsBtn.addEventListener('click', () => { saveToLocalStorage('lastSeenNotification', Date.now().toString()); renderNotifications(); });
-        
-        // --- Filtering and Empty States ---
+
+        function filterAndSearch() {
+            let term = searchInput.value.toLowerCase();
+            const isTag = term.startsWith('tag:');
+            if (isTag) term = term.substring(4).trim();
+            let total = 0;
+            document.querySelectorAll('.project-card').forEach(card => {
+                const searchMatch = isTag ? card.dataset.tags.includes(term) : (card.dataset.title.includes(term) || card.dataset.description.includes(term) || card.dataset.tags.includes(term));
+                const catMatch = activeFilter === 'All' ? true : (activeFilter === 'Favorites' ? favorites.includes(card.dataset.id) : card.dataset.category === activeFilter);
+                const isVisible = searchMatch && catMatch; 
+                card.classList.toggle('hidden', !isVisible);
+                if (isVisible) total++;
+            });
+            document.querySelectorAll('.project-section').forEach(section => {
+                section.classList.toggle('section-hidden', !section.querySelectorAll('.project-card:not(.hidden)').length);
+            });
+            emptyStateMessage.classList.toggle('hidden', total > 0 || allProjects.length === 0);
+            if (!total && allProjects.length > 0) emptyStateMessage.innerHTML = `<p class="text-[var(--muted-foreground)] py-10">No results found.</p>`;
+            lucide.createIcons();
+        }
+
         function renderFilterNavigation() {
             const categories = ['All', 'Favorites', ...new Set(allProjects.map(p => p.category))];
-            const categoryIcons = { 'All': 'layout-grid', 'Favorites': 'star', 'Web Apps': 'app-window', 'Tools': 'wrench', 'System Files': 'folder-cog' };
+            const icons = { 'All': 'layout-grid', 'Favorites': 'star', 'Web Apps': 'app-window', 'Tools': 'wrench', 'System Files': 'folder-cog' };
             filterNavigation.innerHTML = categories.map(cat => `
-                <a href="#" data-category="${cat}" class="sidebar-filter-link flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--secondary-bg)] transition-all duration-200 ${cat === activeFilter ? 'active' : ''}">
-                    <i data-lucide="${categoryIcons[cat] || 'folder'}"></i><span class="whitespace-nowrap">${cat}</span>
+                <a href="#" data-category="${cat}" class="sidebar-filter-link flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-[var(--muted-foreground)] hover:bg-[var(--secondary-bg)] transition-all ${cat === activeFilter ? 'active' : ''}">
+                    <i data-lucide="${icons[cat] || 'folder'}" class="flex-shrink-0"></i><span class="truncate">${cat}</span>
                 </a>
             `).join('');
             lucide.createIcons();
         }
-        
-        function filterAndSearch() {
-            let searchTerm = searchInput.value.toLowerCase();
-            const isTagSearch = searchTerm.startsWith('tag:');
-            if (isTagSearch) {
-                searchTerm = searchTerm.substring(4).trim();
-            }
-            
-            let totalVisibleCards = 0;
-            
-            document.querySelectorAll('.project-card').forEach(card => {
-                const titleMatch = card.dataset.title.includes(searchTerm);
-                const descMatch = card.dataset.description.includes(searchTerm);
-                const tagMatch = isTagSearch ? card.dataset.tags.includes(searchTerm) : card.dataset.tags.includes(searchTerm);
-                
-                const searchMatch = isTagSearch ? tagMatch : (titleMatch || descMatch || tagMatch);
 
-                let categoryMatch = false;
-                if (activeFilter === 'All') {
-                    categoryMatch = true;
-                } else if (activeFilter === 'Favorites') {
-                    categoryMatch = favorites.includes(card.dataset.id);
-                } else {
-                    categoryMatch = card.dataset.category === activeFilter;
-                }
-                
-                const isVisible = searchMatch && categoryMatch;
-                card.classList.toggle('hidden', !isVisible);
-                if (isVisible) totalVisibleCards++;
-            });
-
-            updateSectionVisibility();
-
-            if (totalVisibleCards === 0 && allProjects.length > 0) {
-                mainContent.querySelectorAll('.project-section').forEach(s => s.classList.add('section-hidden'));
-                emptyStateMessage.innerHTML = `<i data-lucide="search-x" class="h-16 w-16 mx-auto text-[var(--muted-foreground)]"></i><h3 class="mt-4 text-xl font-semibold">No Results Found</h3><p class="mt-2 text-[var(--muted-foreground)]">No projects matched your search for "${searchInput.value}".</p>`;
-                emptyStateMessage.classList.remove('hidden');
-            } else if (allProjects.length === 0) {
-                 emptyStateMessage.innerHTML = `<i data-lucide="inbox" class="h-16 w-16 mx-auto text-[var(--muted-foreground)]"></i><h3 class="mt-4 text-xl font-semibold">No Projects Yet</h3><p class="mt-2 text-[var(--muted-foreground)]">Admins can add the first project to get started.</p>`;
-                emptyStateMessage.classList.remove('hidden');
-            } else {
-                emptyStateMessage.classList.add('hidden');
-            }
-            lucide.createIcons();
-        }
-
-        function updateSectionVisibility() {
-            document.querySelectorAll('.project-section').forEach(section => {
-                const hasVisibleCards = section.querySelectorAll('.project-card:not(.hidden)').length > 0;
-                section.classList.toggle('section-hidden', !hasVisibleCards);
-            });
-        }
-        
-        // --- Modals & Forms ---
-        function showFileList(project) {
-            const filesHTML = project.files && project.files.length > 0 ? project.files.map(file => `<li><a href="${file.url}" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--secondary-bg)] transition-colors duration-200"><i data-lucide="file-text" class="h-5 w-5 text-[var(--muted-foreground)]"></i><span>${file.title}</span></a></li>`).join('') : `<li class="p-3 text-[var(--muted-foreground)]">No files listed.</li>`;
-            fileListModalEl.innerHTML = `<div class="modal-content glass-panel w-full max-w-md rounded-2xl shadow-2xl p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">${project.title}</h2><button class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"><i data-lucide="x"></i></button></div><ul class="space-y-1 max-h-80 overflow-y-auto">${filesHTML}</ul></div>`;
-            fileListModalEl.classList.remove('opacity-0', 'pointer-events-none');
-            lucide.createIcons();
-        }
-        function showProjectForm(project = {}) {
-            const isEditing = !!project.id;
-            const files = project.files || [];
-            let currentTags = project.tags || [];
-
-            const colorPalette = ['bg-slate-200', 'bg-red-200', 'bg-orange-200', 'bg-amber-200', 'bg-yellow-200', 'bg-lime-200', 'bg-green-200', 'bg-emerald-200', 'bg-teal-200', 'bg-cyan-200', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-200', 'bg-violet-200', 'bg-purple-200', 'bg-fuchsia-200', 'bg-pink-200', 'bg-rose-200'];
-            const iconList = ['database', 'layout-dashboard', 'bar-chart-3', 'box', 'folder', 'file-text', 'dollar-sign', 'file-check', 'clipboard-list', 'archive', 'settings', 'globe', 'server', 'pen-tool', 'shopping-cart', 'trending-up' ];
-            let colorPickerHTML = colorPalette.map(c => `<button type="button" data-color="${c}" class="w-8 h-8 rounded-full ${c} ring-2 ring-transparent ring-offset-2 ring-offset-[var(--card-bg)] focus:ring-[var(--primary-start)] transition ${project.bgColor === c ? 'ring-[var(--primary-start)]' : ''}"></button>`).join('');
-            let iconPickerHTML = iconList.map(i => `<button type="button" data-icon="${i}" class="p-2 rounded-md hover:bg-[var(--secondary-bg)] transition ${project.iconName === i ? 'bg-[var(--secondary-bg)] text-[var(--primary-start)]' : 'text-[var(--muted-foreground)]'}"><i data-lucide="${i}"></i></button>`).join('');
-            const filesHTML = files.map((file, index) => `<div class="flex items-center space-x-2" data-file-index="${index}"><input type="text" placeholder="File Name" value="${file.title || ''}" class="input-base file-title-input w-1/2 rounded-md px-3 py-2"><input type="url" placeholder="File URL" value="${file.url || ''}" class="input-base file-url-input w-1/2 rounded-md px-3 py-2"><button type="button" class="remove-file-btn text-[var(--destructive)] hover:opacity-80 p-2">&times;</button></div>`).join('');
-            
-            projectFormModalEl.innerHTML = `
-                <div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-                    <form id="project-form">
-                        <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-bold">${isEditing ? 'Edit Project' : 'Add New Project'}</h2><button type="button" class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"><i data-lucide="x"></i></button></div>
-                        <div class="space-y-4">
-                            <input type="hidden" name="id" value="${project.id || ''}"><input type="hidden" name="bgColor" value="${project.bgColor || 'bg-slate-200'}"><input type="hidden" name="iconName" value="${project.iconName || 'box'}">
-                            <div><label class="text-sm font-medium mb-2 block">Title</label><input type="text" name="title" placeholder="Project Title" value="${project.title || ''}" required class="input-base w-full rounded-md px-3 py-2"></div>
-                            <div><label class="text-sm font-medium mb-2 block">Description</label><textarea name="description" placeholder="Description" class="input-base w-full rounded-md px-3 py-2 min-h-[80px]">${project.description || ''}</textarea></div>
-                            <div><label class="text-sm font-medium mb-2 block">Category</label><input type="text" name="category" list="category-suggestions" placeholder="e.g., Web Apps" value="${project.category || ''}" required class="input-base w-full rounded-md px-3 py-2"></div>
-                            <datalist id="category-suggestions">${[...new Set(allProjects.map(p=>p.category))].map(c=>`<option value="${c}">`).join('')}</datalist>
-                            <div>
-                                <label class="text-sm font-medium mb-2 block">Tags</label>
-                                <div id="tag-input-container" class="input-base w-full rounded-md px-3 py-2 flex flex-wrap items-center gap-1">
-                                    <input type="text" id="tag-input" placeholder="Add tags..." class="bg-transparent flex-grow focus:outline-none">
-                                </div>
-                            </div>
-                            <div><label class="text-sm font-medium mb-2 block">Type</label><select name="type" class="input-base w-full rounded-md px-3 py-2"><option value="webapp" ${project.type === 'webapp' ? 'selected' : ''}>Web App</option><option value="folder" ${project.type === 'folder' ? 'selected' : ''}>System Files Folder</option></select></div>
-                            <div class="url-container ${project.type === 'folder' ? 'hidden' : ''}"><label class="text-sm font-medium mb-2 block">URL (for Web Apps)</label><input type="url" name="url" placeholder="https://..." value="${project.url || ''}" class="input-base w-full rounded-md px-3 py-2"></div>
-                            <div><label class="text-sm font-medium mb-2 block">Color</label><div id="color-picker" class="flex flex-wrap gap-2">${colorPickerHTML}</div></div>
-                            <div><label class="text-sm font-medium mb-2 block">Icon</label><div id="icon-picker" class="grid grid-cols-8 gap-1 p-2 border border-[var(--card-border)] rounded-lg">${iconPickerHTML}</div></div>
-                            <div id="files-container" class="${project.type === 'folder' ? '' : 'hidden'}"><h4 class="text-lg font-semibold mt-4">Files</h4><div id="files-list" class="space-y-2 mt-2">${filesHTML}</div><button type="button" id="add-file-btn" class="mt-2 text-sm text-[var(--primary-start)] hover:opacity-80 font-semibold">+ Add File</button></div>
-                        </div>
-                        <p id="form-error" class="text-[var(--destructive)] text-center text-sm mt-4 h-4"></p>
-                        <div class="flex justify-end space-x-4 mt-6"><button type="button" class="close-modal-btn btn-secondary px-4 py-2 rounded-md font-semibold hover:opacity-90">Cancel</button><button type="submit" class="btn-primary px-4 py-2 rounded-md font-semibold hover:opacity-90">Save Project</button></div>
-                    </form>
-                </div>`;
-            
-            projectFormModalEl.classList.remove('opacity-0', 'pointer-events-none');
-            
-            const tagInput = projectFormModalEl.querySelector('#tag-input');
-            const tagContainer = projectFormModalEl.querySelector('#tag-input-container');
-
-            const renderTags = () => {
-                tagContainer.querySelectorAll('.tag-input-badge').forEach(el => el.remove());
-                currentTags.forEach(tag => {
-                    const badge = document.createElement('span');
-                    badge.className = 'tag-input-badge';
-                    badge.innerHTML = `${tag} <button type="button" data-tag="${tag}">&times;</button>`;
-                    tagContainer.insertBefore(badge, tagInput);
-                });
-            };
-            
-            tagContainer.addEventListener('click', e => {
-                if (e.target.tagName === 'BUTTON' && e.target.dataset.tag) {
-                    currentTags = currentTags.filter(t => t !== e.target.dataset.tag);
-                    renderTags();
-                }
-            });
-
-            tagInput.addEventListener('keydown', e => {
-                if (e.key === 'Enter' || e.key === ',') {
-                    e.preventDefault();
-                    const newTag = tagInput.value.trim().toLowerCase();
-                    if (newTag && !currentTags.includes(newTag)) {
-                        currentTags.push(newTag);
-                        renderTags();
-                    }
-                    tagInput.value = '';
-                }
-            });
-
-            renderTags(); // Initial render for editing
-
-            projectFormModalEl.querySelector('#project-form').addEventListener('submit', e => handleFormSubmit(e, currentTags));
-            const typeSelect = projectFormModalEl.querySelector('select[name="type"]'); if (typeSelect) { typeSelect.addEventListener('change', () => { const isFolder = typeSelect.value === 'folder'; projectFormModalEl.querySelector('#files-container').classList.toggle('hidden', !isFolder); projectFormModalEl.querySelector('.url-container').classList.toggle('hidden', isFolder); });}
-            projectFormModalEl.querySelector('#color-picker').addEventListener('click', (e) => { if(e.target.dataset.color) { projectFormModalEl.querySelector('[name="bgColor"]').value = e.target.dataset.color; projectFormModalEl.querySelectorAll('#color-picker button').forEach(b => b.classList.remove('ring-[var(--primary-start)]')); e.target.classList.add('ring-[var(--primary-start)]'); } });
-            projectFormModalEl.querySelector('#icon-picker').addEventListener('click', (e) => { const button = e.target.closest('button'); if(button && button.dataset.icon) { projectFormModalEl.querySelector('[name="iconName"]').value = button.dataset.icon; projectFormModalEl.querySelectorAll('#icon-picker button').forEach(b => b.classList.remove('bg-[var(--secondary-bg)]', 'text-[var(--primary-start)]')); button.classList.add('bg-[var(--secondary-bg)]', 'text-[var(--primary-start)]'); } });
-            lucide.createIcons();
-        }
-        
-        async function showUserManagement() { /* ... content unchanged ... */ }
-        function showConfirmation(message, onConfirm) { /* ... content unchanged ... */ }
-        
-        function formatTimestamp(timestamp) {
-            if (!timestamp) return 'N/A';
-            return new Date(timestamp.toMillis()).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
-        }
-        
         function showProjectDetails(project) {
-            const tagsHTML = project.tags && project.tags.length > 0 
-                ? project.tags.map(tag => `<span class="tag-badge text-xs font-medium px-2.5 py-1 rounded-full">${tag}</span>`).join('')
-                : '<span class="text-sm text-[var(--muted-foreground)]">No tags</span>';
-            const actionButtonText = project.type === 'webapp' ? 'Open Web App' : 'View Files';
-
+            const tags = project.tags && project.tags.length > 0 ? project.tags.map(t => `<span class="tag-badge text-[10px] px-2 py-0.5 rounded-full">${t}</span>`).join('') : '<span class="text-xs">No tags</span>';
+            const actionText = project.type === 'webapp' ? 'Launch Application' : (project.type === 'collection' ? 'Explore Collection' : 'Browse Files');
+            
             projectDetailsModalEl.innerHTML = `
-                <div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl">
+                <div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden">
                     <div class="p-6 flex items-start space-x-6">
-                        <div class="flex-shrink-0 w-24 h-24 ${project.bgColor || 'bg-gray-500'} rounded-lg flex items-center justify-center shadow-inner-lg text-slate-800">${project.icon || ''}</div>
-                        <div class="flex-1">
-                            <h2 class="text-3xl font-bold">${project.title}</h2>
-                            <p class="mt-1 text-sm text-[var(--muted-foreground)] uppercase font-semibold">${project.category}</p>
+                        <div class="card-icon-stage scale-125">
+                            <div class="icon-base-layer ${project.bgColor || 'bg-slate-200'}"></div>
+                            <div class="icon-floating-layer">${project.icon || ''}</div>
                         </div>
-                         <button class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"><i data-lucide="x"></i></button>
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-xl font-bold break-words">${project.title}</h2>
+                            <p class="text-[10px] text-[var(--muted-foreground)] uppercase font-bold tracking-widest mt-1">${project.category}</p>
+                        </div>
+                        <button class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)]"><i data-lucide="x"></i></button>
                     </div>
-                    <div class="px-6 pb-6 border-t border-[var(--card-border)]">
-                        <p class="mt-4 text-base">${project.description || 'No description available.'}</p>
-                        <div class="mt-6">
-                            <h4 class="text-sm font-semibold mb-2 text-[var(--muted-foreground)]">Tags</h4>
-                            <div class="flex flex-wrap gap-2">${tagsHTML}</div>
-                        </div>
-                        <div class="mt-6">
-                             <h4 class="text-sm font-semibold mb-1 text-[var(--muted-foreground)]">Last Updated</h4>
-                             <p>${formatTimestamp(project.lastUpdatedAt)}</p>
+                    <div class="px-6 pb-6 border-t border-[var(--card-border)] overflow-hidden">
+                        <p class="mt-4 text-sm text-[var(--card-foreground)] leading-relaxed break-words">${project.description || 'No description available.'}</p>
+                        <div class="mt-6 flex justify-between items-end">
+                            <div>
+                                <h4 class="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-2">Tags</h4>
+                                <div class="flex flex-wrap gap-2">${tags}</div>
+                            </div>
+                            <div class="text-right">
+                                <h4 class="text-[10px] font-bold text-[var(--muted-foreground)] uppercase mb-1">Activity</h4>
+                                <p class="text-xs text-[var(--muted-foreground)]">${project.clickCount || 0} views</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="px-6 py-4 bg-[var(--secondary-bg)] rounded-b-2xl border-t border-[var(--card-border)]">
-                        <button id="project-details-action-btn" data-id="${project.id}" class="btn-primary w-full font-semibold py-2.5 px-4 rounded-lg">${actionButtonText}</button>
+                    <div class="px-6 py-4 bg-[var(--secondary-bg)] border-t border-[var(--card-border)]">
+                        <button id="project-details-action-btn" data-id="${project.id}" class="btn-primary w-full text-sm font-bold py-2.5 rounded-lg shadow-lg">
+                            ${actionText}
+                        </button>
                     </div>
                 </div>`;
             projectDetailsModalEl.classList.remove('opacity-0', 'pointer-events-none');
             lucide.createIcons();
         }
 
-        function showUserProfile() {
-            userProfileModalEl.innerHTML = `
-                 <div class="modal-content glass-panel w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center">
-                    <div class="flex justify-end"><button class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors -mt-2 -mr-2"><i data-lucide="x"></i></button></div>
-                    <i data-lucide="user-circle-2" class="w-20 h-20 mx-auto text-[var(--primary-start)]"></i>
-                    <h2 class="text-2xl font-bold mt-4">${currentUser.email}</h2>
-                    <p class="mt-1 text-sm uppercase font-semibold text-[var(--muted-foreground)]">${userRole}</p>
-                    <div class="mt-6 text-left">
-                        <button id="reset-password-btn" class="w-full btn-secondary font-semibold px-4 py-2 rounded-lg">Send Password Reset Email</button>
-                         <p id="password-reset-status" class="text-sm text-center mt-3 h-4"></p>
-                    </div>
-                </div>
-            `;
-            userProfileModalEl.classList.remove('opacity-0', 'pointer-events-none');
-            lucide.createIcons();
-        }
-
-        // --- Event Handlers & Logic ---
         async function handleFormSubmit(event, tags) {
             event.preventDefault();
-            const form = event.target;
-            const saveButton = form.querySelector('button[type="submit"]');
-            const errorEl = form.querySelector('#form-error');
-            saveButton.disabled = true; saveButton.textContent = 'Saving...'; errorEl.textContent = '';
+            const form = event.target, saveBtn = form.querySelector('button[type="submit"]'), id = form.elements.id.value;
+            saveBtn.disabled = true; saveBtn.textContent = 'Saving...';
+            const iconName = form.iconName.value, iconSVG = `<i data-lucide="${iconName}" class="w-7 h-7"></i>`;
             
-            const id = form.elements.id.value; const title = form.title.value; const category = form.category.value;
-            const iconName = form.iconName.value; const iconSVG = `<i data-lucide="${iconName}" class="w-8 h-8"></i>`;
-            const files = [...form.querySelectorAll('[data-file-index]')].map(el => ({ title: el.querySelector('.file-title-input').value, url: el.querySelector('.file-url-input').value }));
-            const projectData = { title, description: form.description.value, type: form.type.value, url: form.type.value === 'webapp' ? form.url.value : '', bgColor: form.bgColor.value, category, icon: iconSVG, iconName, tags: tags || [], files: form.type.value === 'folder' ? files : [], lastUpdatedAt: serverTimestamp() };
+            const files = (form.type.value === 'folder' || form.type.value === 'collection')
+                ? [...form.querySelectorAll('[data-file-index]')].map(el => ({ 
+                    title: el.querySelector('.file-title-input').value, 
+                    url: el.querySelector('.file-url-input').value 
+                })).filter(f => f.title && f.url)
+                : [];
+
+            const data = { 
+                title: form.title.value, 
+                description: form.description.value, 
+                type: form.type.value, 
+                url: form.type.value === 'webapp' ? form.url.value : '', 
+                bgColor: form.bgColor.value, 
+                category: form.category.value, 
+                icon: iconSVG, 
+                iconName, 
+                tags: tags || [], 
+                files: files, 
+                lastUpdatedAt: serverTimestamp(),
+                clickCount: id ? increment(0) : 0, 
+                order: id ? increment(0) : allProjects.filter(p => p.category === form.category.value).length
+            };
 
             try {
-                if (id) {
-                    await updateDoc(doc(db, "projects", id), projectData);
-                    await createNotification("Updated", title);
-                } else {
-                    await addDoc(projectsCollection, projectData);
-                    await createNotification("Added", title);
+                if (id) { 
+                    await updateDoc(doc(db, "projects", id), data); 
+                    await createNotification("Updated", data.title); 
+                } else { 
+                    await addDoc(projectsCollection, data); 
+                    await createNotification("Added", data.title); 
                 }
                 projectFormModalEl.classList.add('opacity-0', 'pointer-events-none');
-            } catch (error) { console.error("Error saving project:", error); errorEl.textContent = `Error: ${error.message.replace('Firebase: ', '')}`;
-            } finally { saveButton.disabled = false; saveButton.textContent = 'Save Project'; }
+            } catch (e) { document.getElementById('form-error').textContent = e.message; } 
+            finally { saveBtn.disabled = false; saveBtn.textContent = 'Save Project'; }
         }
-        
-        async function handleSignUpSubmit(e) {
-            e.preventDefault();
-            signupError.textContent = '';
-            const email = signupForm.email.value;
-            const password = signupForm.password.value;
 
-            try {
-                const inviteDocRef = doc(db, "invites", email);
-                const inviteDoc = await getDoc(inviteDocRef);
+        function formatTimestamp(t) { return t ? new Date(t.toMillis()).toLocaleDateString() : 'N/A'; }
 
-                if (!inviteDoc.exists()) {
-                    throw new Error("You have not been invited. Please contact an admin.");
-                }
-
-                const { role } = inviteDoc.data();
-                
-                // Create user
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // Batch write: create user doc and delete invite atomically
-                const batch = writeBatch(db);
-                const userDocRef = doc(db, "users", user.uid);
-                batch.set(userDocRef, { email, role });
-                batch.delete(inviteDocRef);
-                
-                await batch.commit();
-
-                // onAuthStateChanged will handle the UI transition
-            } catch (error) {
-                console.error("Sign up error:", error);
-                signupError.textContent = error.message.replace('Firebase: ', '');
-            }
-        }
-        async function handleInviteSubmit(e) {
-            e.preventDefault();
-            const form = e.target;
-            const inviteStatus = form.querySelector('#invite-status');
-            const email = form.inviteEmail.value;
-            const role = form.inviteRole.value;
-
-            if (!email) {
-                inviteStatus.textContent = 'Please enter an email.';
-                inviteStatus.className = 'text-[var(--destructive)] text-sm text-center mt-3 h-4';
-                return;
-            }
-
-            inviteStatus.textContent = 'Sending...';
-            inviteStatus.className = 'text-[var(--muted-foreground)] text-sm text-center mt-3 h-4';
-
-            try {
-                const inviteDoc = await getDoc(doc(db, "invites", email));
-                const usersQuery = query(collection(db, "users"), where("email", "==", email));
-                const userSnapshot = await getDocs(usersQuery);
-
-                if (!userSnapshot.empty || inviteDoc.exists()) {
-                    throw new Error("User already exists or has a pending invite.");
-                }
-
-                await setDoc(doc(db, "invites", email), {
-                    role: role,
-                    createdAt: serverTimestamp()
-                });
-                
-                inviteStatus.textContent = 'Invite sent successfully!';
-                inviteStatus.className = 'text-green-500 text-sm text-center mt-3 h-4';
-                form.reset();
-                // Refresh the modal content by re-triggering the click that opens it
-                const currentOpenModal = document.querySelector('#user-management-modal');
-                if(currentOpenModal && !currentOpenModal.classList.contains('opacity-0')) {
-                    manageUsersBtn.click();
-                }
-
-            } catch (error) {
-                console.error("Error sending invite:", error);
-                inviteStatus.textContent = error.message;
-                inviteStatus.className = 'text-[var(--destructive)] text-sm text-center mt-3 h-4';
-            }
+        function showConfirmation(msg, onConfirm) {
+            confirmModalEl.innerHTML = `<div class="modal-content glass-panel p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center"><i data-lucide="alert-circle" class="w-12 h-12 mx-auto text-red-500 mb-4"></i><p class="mb-6 font-medium">${msg}</p><div class="flex gap-2"><button class="close-modal-btn btn-secondary flex-1 py-2 rounded-lg font-bold">Cancel</button><button id="confirm-action-btn" class="btn-destructive flex-1 py-2 rounded-lg font-bold">Confirm</button></div></div>`;
+            confirmModalEl.classList.remove('opacity-0', 'pointer-events-none');
+            lucide.createIcons();
+            confirmModalEl.querySelector('#confirm-action-btn').onclick = () => { onConfirm(); confirmModalEl.classList.add('opacity-0', 'pointer-events-none'); };
         }
 
         function addParallaxEventListeners() {
-            const cards = document.querySelectorAll('.project-card');
-            cards.forEach(card => {
+            document.querySelectorAll('.project-card').forEach(card => {
                 card.addEventListener('mousemove', (e) => {
-                    const rect = card.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-                    const { width, height } = rect;
-                    const rotateX = (y - height / 2) / (height / 2) * -7; // Max 7deg rotation
-                    const rotateY = (x - width / 2) / (width / 2) * 7;   // Max 7deg rotation
-                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+                    const r = card.getBoundingClientRect();
+                    const x = (e.clientX - r.left - r.width/2) / (r.width/2) * 5;
+                    const y = (e.clientY - r.top - r.height/2) / (r.height/2) * -5;
+                    card.style.transform = `perspective(1000px) rotateX(${y}deg) rotateY(${x}deg) scale(1.02)`;
                 });
-                card.addEventListener('mouseleave', () => {
-                    card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
-                });
+                card.addEventListener('mouseleave', () => card.style.transform = '');
             });
         }
 
-        // --- Global Event Listeners ---
-        document.addEventListener('click', async (e) => {
-            if (e.target.closest('.close-modal-btn')) {
-                e.target.closest('.modal').classList.add('opacity-0', 'pointer-events-none');
-            }
-            if (e.target.closest('#user-profile-btn')) {
-                showUserProfile();
-            }
-            if (e.target.closest('#reset-password-btn')) {
-                const statusEl = document.getElementById('password-reset-status');
-                try {
-                    await sendPasswordResetEmail(auth, currentUser.email);
-                    statusEl.textContent = 'Password reset email sent!';
-                    statusEl.className = 'text-green-500 text-center text-sm mt-3 h-4';
-                } catch (error) {
-                    console.error("Error sending password reset email:", error);
-                    statusEl.textContent = error.message;
-                    statusEl.className = 'text-[var(--destructive)] text-center text-sm mt-3 h-4';
-                }
-            }
-            const projectDetailsActionBtn = e.target.closest('#project-details-action-btn');
-            if (projectDetailsActionBtn) {
-                const project = allProjects.find(p => p.id === projectDetailsActionBtn.dataset.id);
-                projectDetailsModalEl.classList.add('opacity-0', 'pointer-events-none');
-                if (project.type === 'webapp') {
-                    window.open(project.url, '_blank', 'noopener noreferrer');
-                } else if (project.type === 'folder') {
-                    setTimeout(() => showFileList(project), 300); // Delay to allow details modal to close
-                }
-            }
-            if (e.target.closest('.delete-invite-btn')) { const email = e.target.dataset.email; showConfirmation(`Revoke invite for "${email}"?`, async () => { try { await deleteDoc(doc(db, "invites", email)); showUserManagement(); } catch (error) { console.error("Error revoking invite:", error); } }); }
-            if (e.target.closest('#add-file-btn')) { const list = document.getElementById('files-list'), fileEl = document.createElement('div'); fileEl.className = 'flex items-center space-x-2'; fileEl.dataset.fileIndex = list.children.length; fileEl.innerHTML = `<input type="text" placeholder="File Name" class="input-base file-title-input w-1/2 rounded-md px-3 py-2"><input type="url" placeholder="File URL" class="input-base file-url-input w-1/2 rounded-md px-3 py-2"><button type="button" class="remove-file-btn text-[var(--destructive)] hover:opacity-80 p-2">&times;</button>`; list.appendChild(fileEl); }
-            if (e.target.closest('.remove-file-btn')) e.target.closest('[data-file-index]').remove();
+        function showProjectForm(project = {}) {
+            const isEditing = !!project.id;
+            const files = project.files || [];
+            let currentTags = [...(project.tags || [])];
 
-            const card = e.target.closest('.project-card');
-            // Handle tag clicks
-            if(e.target.closest('.tag-badge')) {
-                const tag = e.target.closest('.tag-badge').textContent;
-                searchInput.value = `tag: ${tag}`;
-                filterAndSearch();
-                return; // Prevent card click logic from firing
-            }
-
-            if(!card || !currentUser) return;
-            const projectId = card.dataset.id, project = allProjects.find(p => p.id === projectId); if(!project) return;
+            const colorPalette = ['bg-slate-200', 'bg-red-200', 'bg-orange-200', 'bg-amber-200', 'bg-yellow-200', 'bg-lime-200', 'bg-green-200', 'bg-emerald-200', 'bg-teal-200', 'bg-cyan-200', 'bg-sky-200', 'bg-blue-200', 'bg-indigo-200', 'bg-violet-200', 'bg-purple-200', 'bg-fuchsia-200', 'bg-pink-200', 'bg-rose-200'];
+            const iconList = ['database', 'layout-dashboard', 'bar-chart-3', 'box', 'folder', 'layers', 'file-text', 'dollar-sign', 'file-check', 'clipboard-list', 'archive', 'settings', 'globe', 'server', 'pen-tool', 'shopping-cart', 'trending-up' ];
             
-            // Card action buttons
-            if (e.target.closest('.favorite-btn')) { favorites.includes(projectId) ? favorites = favorites.filter(id => id !== projectId) : favorites.push(projectId); saveToLocalStorage('favoriteProjects', favorites); renderAll(); return; }
-            if (userRole === 'admin' && e.target.closest('.edit-btn')) { showProjectForm(project); return; }
-            if (userRole === 'admin' && e.target.closest('.delete-btn')) { showConfirmation(`Delete "${project.title}" permanently?`, async () => { try { await deleteDoc(doc(db, "projects", projectId)); await createNotification("Deleted", project.title); } catch (error) { console.error("Error deleting document:", error); } }); return; }
+            const colorPickerHTML = colorPalette.map(c => `<button type="button" data-color="${c}" class="w-6 h-6 rounded-full ${c} ring-2 ring-transparent ring-offset-1 focus:ring-[var(--primary-start)] transition ${project.bgColor === c ? 'ring-[var(--primary-start)]' : ''}"></button>`).join('');
+            const iconPickerHTML = iconList.map(i => `<button type="button" data-icon="${i}" class="p-1.5 rounded hover:bg-[var(--secondary-bg)] transition ${project.iconName === i ? 'bg-[var(--secondary-bg)] text-[var(--primary-start)]' : 'text-[var(--muted-foreground)]'}"><i data-lucide="${i}" class="w-4 h-4"></i></button>`).join('');
+            const filesHTML = files.map((file, index) => `<div class="flex items-center space-x-2" data-file-index="${index}"><input type="text" placeholder="Name" value="${file.title || ''}" class="input-base file-title-input w-1/2 rounded-md px-2 py-1.5 text-xs"><input type="url" placeholder="URL" value="${file.url || ''}" class="input-base file-url-input w-1/2 rounded-md px-2 py-1.5 text-xs"><button type="button" class="remove-file-btn text-red-500 p-1">&times;</button></div>`).join('');
+            
+            projectFormModalEl.innerHTML = `
+                <div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
+                    <form id="project-form">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold">${isEditing ? 'Edit' : 'New'} Entry</h2>
+                            <button type="button" class="close-modal-btn text-[var(--muted-foreground)]"><i data-lucide="x"></i></button>
+                        </div>
+                        <div class="space-y-4">
+                            <input type="hidden" name="id" value="${project.id || ''}">
+                            <input type="hidden" name="bgColor" value="${project.bgColor || 'bg-slate-200'}">
+                            <input type="hidden" name="iconName" value="${project.iconName || 'box'}">
+                            
+                            <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Title</label>
+                            <input type="text" name="title" value="${project.title || ''}" required class="input-base w-full rounded-lg px-3 py-2 text-sm"></div>
+                            
+                            <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Description</label>
+                            <textarea name="description" class="input-base w-full rounded-lg px-3 py-2 text-sm h-20">${project.description || ''}</textarea></div>
+                            
+                            <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Category</label>
+                            <input type="text" name="category" list="cat-list" value="${project.category || ''}" required class="input-base w-full rounded-lg px-3 py-2 text-sm">
+                            <datalist id="cat-list">${[...new Set(allProjects.map(p=>p.category))].map(c=>`<option value="${c}">`).join('')}</datalist></div>
 
-            // If no action button was clicked, show details
-            showProjectDetails(project);
-        });
+                            <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Tags (Enter/Comma)</label>
+                            <div id="tag-input-wrapper" class="input-base w-full rounded-lg px-2 py-1.5 flex flex-wrap gap-1 items-center">
+                                <input type="text" id="tag-input-field" placeholder="..." class="bg-transparent text-sm focus:outline-none flex-grow min-w-[50px]">
+                            </div></div>
 
-        userManagementModalEl.addEventListener('click', (e) => {
-             if (e.target.closest('.tab-btn')) { const tab = e.target.dataset.tab; userManagementModalEl.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); if(tab === 'invites') { userManagementModalEl.querySelector('#invites-tab-content').classList.remove('hidden'); userManagementModalEl.querySelector('#users-tab-content').classList.add('hidden'); } else { userManagementModalEl.querySelector('#invites-tab-content').classList.add('hidden'); userManagementModalEl.querySelector('#users-tab-content').classList.remove('hidden'); } }
-             if (e.target.closest('.delete-user-btn')) { const userId = e.target.closest('button').dataset.userid; const userEmail = e.target.closest('button').dataset.useremail; showConfirmation(`Delete user "${userEmail}" permanently? This cannot be undone.`, async () => { try { await deleteDoc(doc(db, "users", userId)); showUserManagement(); await createNotification("Deleted user", userEmail); } catch (error) { console.error("Error deleting user:", error); } }); }
-        });
-        
-         userManagementModalEl.addEventListener('change', async (e) => {
-            if (e.target.matches('.user-role-select')) { const userId = e.target.dataset.userid; const newRole = e.target.value; try { await updateDoc(doc(db, "users", userId), { role: newRole }); await createNotification("Updated role for", (await getDoc(doc(db, "users", userId))).data().email); } catch (error) { console.error("Error updating user role:", error); } }
-        });
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Type</label>
+                                <select name="type" id="type-select" class="input-base w-full rounded-lg px-3 py-2 text-sm">
+                                    <option value="webapp" ${project.type === 'webapp' ? 'selected' : ''}>Web App</option>
+                                    <option value="folder" ${project.type === 'folder' ? 'selected' : ''}>Folder</option>
+                                    <option value="collection" ${project.type === 'collection' ? 'selected' : ''}>Collection</option>
+                                </select></div>
+                                <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Icon Color</label>
+                                <div id="color-picker-grid" class="flex flex-wrap gap-1.5 mt-1">${colorPickerHTML}</div></div>
+                            </div>
 
-        authToggleLink.addEventListener('click', (e) => { e.preventDefault(); const isLoginVisible = !loginForm.classList.contains('hidden'); loginForm.classList.toggle('hidden', isLoginVisible); signupForm.classList.toggle('hidden', !isLoginVisible); e.target.textContent = isLoginVisible ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"; authError.textContent = ''; signupError.textContent = ''; });
-        loginForm.addEventListener('submit', (e) => { e.preventDefault(); authError.textContent = ''; signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(error => { console.error("Auth Error:", error); authError.textContent = 'Invalid email or password.'; });});
-        signupForm.addEventListener('submit', handleSignUpSubmit);
-        signOutBtn.addEventListener('click', () => signOut(auth));
-        userManagementModalEl.addEventListener('submit', (e) => { if (e.target.id === 'invite-user-form') handleInviteSubmit(e); });
-        
-        filterNavigation.addEventListener('click', (e) => {
-            const link = e.target.closest('.sidebar-filter-link');
-            if (link) {
-                e.preventDefault();
-                activeFilter = link.dataset.category;
-                renderFilterNavigation();
-                filterAndSearch();
+                            <div id="url-entry" class="${(project.type === 'folder' || project.type === 'collection') ? 'hidden' : ''}">
+                                <label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Application URL</label>
+                                <input type="url" name="url" placeholder="https://..." value="${project.url || ''}" class="input-base w-full rounded-lg px-3 py-2 text-sm">
+                            </div>
+
+                            <div id="folder-entry" class="${(project.type !== 'folder' && project.type !== 'collection') ? 'hidden' : ''}">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label id="items-label" class="text-xs font-bold uppercase text-[var(--muted-foreground)]">${project.type === 'collection' ? 'Collection Projects' : 'Folder Files'}</label>
+                                    <button type="button" id="add-file-btn" class="text-[10px] font-bold text-[var(--primary-start)]">+ ADD ITEM</button>
+                                </div>
+                                <div id="files-list-container" class="space-y-2">${filesHTML}</div>
+                            </div>
+
+                            <div><label class="text-xs font-bold uppercase text-[var(--muted-foreground)] mb-1 block">Icon Grid</label>
+                            <div id="icon-picker-grid" class="grid grid-cols-8 gap-1 p-2 border border-[var(--card-border)] rounded-lg">${iconPickerHTML}</div></div>
+                        </div>
+                        <p id="form-error" class="text-red-500 text-center text-xs mt-4"></p>
+                        <div class="flex gap-3 mt-6">
+                            <button type="button" class="close-modal-btn btn-secondary flex-1 py-2.5 rounded-xl font-bold">Cancel</button>
+                            <button type="submit" class="btn-primary flex-1 py-2.5 rounded-xl font-bold shadow-lg">Save Changes</button>
+                        </div>
+                    </form>
+                </div>`;
+            
+            projectFormModalEl.classList.remove('opacity-0', 'pointer-events-none');
+            lucide.createIcons();
+
+            const form = projectFormModalEl.querySelector('#project-form');
+            const typeSelect = form.querySelector('#type-select');
+            const tagInput = form.querySelector('#tag-input-field');
+            const tagWrapper = form.querySelector('#tag-input-wrapper');
+
+            const renderFormTags = () => {
+                form.querySelectorAll('.tag-input-badge').forEach(el => el.remove());
+                currentTags.forEach(tag => {
+                    const span = document.createElement('span');
+                    span.className = 'tag-input-badge';
+                    span.innerHTML = `${tag} <button type="button" data-tag="${tag}">&times;</button>`;
+                    tagWrapper.insertBefore(span, tagInput);
+                });
+            };
+
+            typeSelect.onchange = () => {
+                const type = typeSelect.value;
+                const isItemBased = type === 'folder' || type === 'collection';
+                form.querySelector('#url-entry').classList.toggle('hidden', isItemBased);
+                form.querySelector('#folder-entry').classList.toggle('hidden', !isItemBased);
+                form.querySelector('#items-label').textContent = type === 'collection' ? 'Collection Projects' : 'Folder Files';
+            };
+
+            tagInput.onkeydown = (e) => {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    const val = tagInput.value.trim().toLowerCase();
+                    if (val && !currentTags.includes(val)) {
+                        currentTags.push(val);
+                        renderFormTags();
+                    }
+                    tagInput.value = '';
+                }
+            };
+
+            tagWrapper.onclick = (e) => {
+                const btn = e.target.closest('button');
+                if (btn && btn.dataset.tag) {
+                    currentTags = currentTags.filter(t => t !== btn.dataset.tag);
+                    renderFormTags();
+                }
+            };
+
+            form.querySelector('#color-picker-grid').onclick = (e) => {
+                const btn = e.target.closest('[data-color]');
+                if (btn) {
+                    form.bgColor.value = btn.dataset.color;
+                    form.querySelectorAll('#color-picker-grid button').forEach(b => b.classList.remove('ring-[var(--primary-start)]'));
+                    btn.classList.add('ring-[var(--primary-start)]');
+                }
+            };
+
+            form.querySelector('#icon-picker-grid').onclick = (e) => {
+                const btn = e.target.closest('[data-icon]');
+                if (btn) {
+                    form.iconName.value = btn.dataset.icon;
+                    form.querySelectorAll('#icon-picker-grid button').forEach(b => b.classList.remove('bg-[var(--secondary-bg)]', 'text-[var(--primary-start)]'));
+                    btn.classList.add('bg-[var(--secondary-bg)]', 'text-[var(--primary-start)]');
+                }
+            };
+
+            form.querySelector('#add-file-btn').onclick = () => {
+                const container = form.querySelector('#files-list-container');
+                const div = document.createElement('div');
+                div.className = 'flex items-center space-x-2';
+                div.dataset.fileIndex = container.children.length;
+                div.innerHTML = `<input type="text" placeholder="Name" class="input-base file-title-input w-1/2 rounded-md px-2 py-1.5 text-xs"><input type="url" placeholder="URL" class="input-base file-url-input w-1/2 rounded-md px-2 py-1.5 text-xs"><button type="button" class="remove-file-btn text-red-500 p-1">&times;</button>`;
+                container.appendChild(div);
+            };
+
+            form.onclick = (e) => {
+                if (e.target.closest('.remove-file-btn')) e.target.closest('[data-file-index]').remove();
+            };
+
+            form.onsubmit = (e) => handleFormSubmit(e, currentTags);
+
+            renderFormTags();
+        }
+
+        document.addEventListener('click', async (e) => {
+            const closeBtn = e.target.closest('.close-modal-btn');
+            if (closeBtn) closeBtn.closest('.modal').classList.add('opacity-0', 'pointer-events-none');
+            
+            if (e.target.closest('#user-profile-btn')) {
+                userProfileModalEl.innerHTML = `<div class="modal-content glass-panel w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center"><button class="close-modal-btn float-right"><i data-lucide="x"></i></button><i data-lucide="user-circle-2" class="w-16 h-16 mx-auto text-[var(--primary-start)] mb-4"></i><p class="font-bold truncate mb-1 text-sm">${currentUser.email}</p><p class="text-[10px] uppercase font-bold text-[var(--muted-foreground)] mb-6">${userRole}</p><button id="reset-password-btn" class="btn-secondary w-full text-xs font-bold py-2 rounded-lg">Reset Password</button></div>`;
+                userProfileModalEl.classList.remove('opacity-0', 'pointer-events-none');
+                lucide.createIcons();
+            }
+            if (e.target.closest('#reset-password-btn')) { try { await sendPasswordResetEmail(auth, currentUser.email); e.target.textContent = 'Email Sent!'; } catch(e){} }
+            
+            const detBtn = e.target.closest('#project-details-action-btn');
+            if (detBtn) {
+                const p = allProjects.find(i => i.id === detBtn.dataset.id);
+                projectDetailsModalEl.classList.add('opacity-0', 'pointer-events-none');
+                trackClick(p.id);
+
+                if (p.type === 'webapp') window.open(p.url, '_blank');
+                else {
+                    const fHtml = p.files && p.files.length ? p.files.map(f => `
+                        <li class="p-3 bg-[var(--secondary-bg)] rounded-xl border border-[var(--card-border)] hover:border-[var(--primary-start)] transition-all overflow-hidden">
+                            <a href="${f.url}" target="_blank" class="text-xs font-bold flex items-center gap-3 truncate">
+                                <i data-lucide="${p.type === 'collection' ? 'app-window' : 'file'}" class="w-4 h-4 flex-shrink-0 text-[var(--primary-start)]"></i>
+                                ${f.title}
+                            </a>
+                        </li>
+                    `).join('') : '<li class="text-xs italic p-4 text-center">Empty.</li>';
+                    fileListModalEl.innerHTML = `<div class="modal-content glass-panel w-full max-w-md rounded-2xl p-6 max-h-[80vh] overflow-y-auto"><div class="flex justify-between mb-4 items-center"><h3 class="font-bold truncate mr-4 text-lg">${p.title}</h3><button class="close-modal-btn"><i data-lucide="x"></i></button></div><ul class="space-y-2">${fHtml}</ul></div>`;
+                    fileListModalEl.classList.remove('opacity-0', 'pointer-events-none'); lucide.createIcons();
+                }
+            }
+            
+            const card = e.target.closest('.project-card');
+            if (card && currentUser && !e.target.closest('.card-actions') && !e.target.closest('.tag-badge')) showProjectDetails(allProjects.find(p => p.id === card.dataset.id));
+            if (e.target.closest('.favorite-btn')) {
+                const pid = card.dataset.id;
+                favorites = favorites.includes(pid) ? favorites.filter(i => i !== pid) : [...favorites, pid];
+                saveToLocalStorage('favoriteProjects', favorites); renderAll();
+            }
+            if (userRole === 'admin' && e.target.closest('.edit-btn')) {
+                const p = allProjects.find(i => i.id === card.dataset.id);
+                showProjectForm(p);
+            }
+            if (userRole === 'admin' && e.target.closest('.delete-btn')) {
+                const p = allProjects.find(i => i.id === card.dataset.id);
+                showConfirmation(`Delete ${p.title} permanently?`, async () => { await deleteDoc(doc(db, "projects", p.id)); await createNotification("Deleted", p.title); });
             }
         });
 
-        searchInput.addEventListener('input', filterAndSearch);
-        addProjectBtn.addEventListener('click', () => showProjectForm());
-        manageUsersBtn.addEventListener('click', async () => {
-             const usersSnapshot = await getDocs(usersCollection);
-            const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            const invitesSnapshot = await getDocs(invitesCollection);
-            const pendingInvites = invitesSnapshot.docs.map(doc => ({ email: doc.id, ...doc.data() }));
-            const invitesHTML = pendingInvites.length > 0 ? pendingInvites.map(invite => `<li class="flex justify-between items-center p-2 bg-[var(--secondary-bg)] rounded-md"><div><span>${invite.email}</span><span class="text-xs uppercase font-semibold ml-2 px-2 py-1 rounded-full ${invite.role === 'admin' ? 'bg-red-500 text-white' : 'bg-gray-500 text-gray-200'}">${invite.role}</span></div><button data-email="${invite.email}" class="delete-invite-btn text-xl text-[var(--muted-foreground)] hover:text-[var(--destructive)] leading-none">&times;</button></li>`).join('') : `<li class="text-[var(--muted-foreground)] italic p-2">No pending invites.</li>`;
-            const usersHTML = allUsers.length > 0 ? allUsers.map(user => `<li class="flex justify-between items-center p-2 bg-[var(--secondary-bg)] rounded-md"><span class="truncate pr-2" title="${user.email}">${user.email}</span><div class="flex items-center space-x-2"><select data-userid="${user.id}" class="user-role-select input-base rounded-md px-2 py-1 text-sm ${user.id === currentUser.uid ? 'opacity-50' : ''}" ${user.id === currentUser.uid ? 'disabled' : ''}><option value="viewer" ${user.role === 'viewer' ? 'selected' : ''}>Viewer</option><option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option></select><button data-userid="${user.id}" data-useremail="${user.email}" class="delete-user-btn text-[var(--muted-foreground)] hover:text-[var(--destructive)] p-1 ${user.id === currentUser.uid ? 'hidden' : ''}" ${user.id === currentUser.uid ? 'disabled' : ''}><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></li>`).join('') : `<li class="text-[var(--muted-foreground)] italic p-2">No users found.</li>`;
-            userManagementModalEl.innerHTML = `<div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl p-6"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">Manage Users</h2><button type="button" class="close-modal-btn text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-colors"><i data-lucide="x"></i></button></div><div class="border-b border-[var(--card-border)] mb-4"><nav class="-mb-px flex space-x-4" aria-label="Tabs"><button data-tab="invites" class="tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Invites & Pending</button><button data-tab="users" class="tab-btn whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]">All Users</button></nav></div><div id="invites-tab-content"><form id="invite-user-form"><h4 class="text-lg font-semibold mb-2">Invite New User</h4><p class="text-[var(--muted-foreground)] mb-4 text-sm">The user can create an account using the invited email.</p><div class="flex space-x-2"><input type="email" name="inviteEmail" placeholder="New User's Email" required class="input-base flex-grow w-full rounded-md px-3 py-2"><select name="inviteRole" class="input-base rounded-md px-3 py-2"><option value="viewer" selected>Viewer</option><option value="admin">Admin</option></select></div><button type="submit" class="w-full mt-3 btn-primary font-semibold px-4 py-2 rounded-md hover:opacity-90">Send Invite</button><p id="invite-status" class="text-sm text-center mt-3 h-4"></p></form><div class="mt-6"><h4 class="text-lg font-semibold mb-2">Pending Invites</h4><ul id="pending-invites-list" class="space-y-2 max-h-48 overflow-y-auto mt-2">${invitesHTML}</ul></div></div><div id="users-tab-content" class="hidden"><h4 class="text-lg font-semibold mb-2">Manage Existing Users</h4><ul id="all-users-list" class="space-y-2 max-h-64 overflow-y-auto mt-2">${usersHTML}</ul></div></div>`;
+        userManagementModalEl.onclick = (e) => {
+            const tabBtn = e.target.closest('.tab-trigger');
+            if (tabBtn) {
+                const tab = tabBtn.dataset.tab;
+                userManagementModalEl.querySelectorAll('.tab-trigger').forEach(b => b.classList.remove('active'));
+                tabBtn.classList.add('active');
+                userManagementModalEl.querySelector('#invites-tab').classList.toggle('hidden', tab !== 'invites');
+                userManagementModalEl.querySelector('#users-tab').classList.toggle('hidden', tab !== 'users');
+            }
+        };
+
+        authToggleLink.onclick = (e) => { e.preventDefault(); loginForm.classList.toggle('hidden'); signupForm.classList.toggle('hidden'); authToggleLink.textContent = loginForm.classList.contains('hidden') ? 'Sign In' : 'Sign Up'; };
+        loginForm.onsubmit = (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, loginForm.email.value, loginForm.password.value).catch(() => authError.textContent = 'Invalid credentials.'); };
+        signOutBtn.onclick = () => signOut(auth);
+        themeSwitcher.onclick = () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); };
+        notificationBtn.onclick = (e) => { e.stopPropagation(); notificationPanel.classList.toggle('hidden'); };
+        document.addEventListener('click', () => notificationPanel.classList.add('hidden'));
+        document.addEventListener('mousemove', (e) => { document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`); document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`); });
+        searchInput.oninput = filterAndSearch;
+        addProjectBtn.onclick = () => showProjectForm();
+
+        manageUsersBtn.onclick = async () => {
+            const users = (await getDocs(usersCollection)).docs.map(d => ({id: d.id, ...d.data()}));
+            const invites = (await getDocs(invitesCollection)).docs.map(d => ({email: d.id, ...d.data()}));
+            
+            userManagementModalEl.innerHTML = `
+                <div class="modal-content glass-panel w-full max-w-lg rounded-2xl shadow-2xl p-6 overflow-hidden">
+                    <div class="flex justify-between mb-6">
+                        <h2 class="text-xl font-bold">Access Control</h2>
+                        <button class="close-modal-btn"><i data-lucide="x"></i></button>
+                    </div>
+                    <div class="flex border-b border-[var(--card-border)] mb-4">
+                        <button data-tab="invites" class="tab-trigger active px-4 py-2 text-xs font-bold">Pending Invites</button>
+                        <button data-tab="users" class="tab-trigger px-4 py-2 text-xs font-bold">Active Directory</button>
+                    </div>
+                    <div id="invites-tab">
+                        <form id="invite-user-form" class="mb-6">
+                            <div class="flex gap-2">
+                                <input type="email" name="inviteEmail" placeholder="Email" class="input-base flex-1 p-2 rounded-lg text-xs" required>
+                                <select name="inviteRole" class="input-base p-2 rounded-lg text-xs">
+                                    <option value="viewer">Viewer</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                                <button type="submit" class="btn-primary px-3 rounded-lg text-xs font-bold">Invite</button>
+                            </div>
+                            <p id="invite-status" class="mt-2 text-[10px] h-3"></p>
+                        </form>
+                        <ul class="space-y-1 max-h-48 overflow-auto">
+                            ${invites.map(i => `<li class="flex justify-between items-center p-2 bg-[var(--secondary-bg)] rounded-lg text-[10px]"><span>${i.email} (${i.role})</span><button data-email="${i.email}" class="delete-invite-btn text-red-500 font-bold px-2">&times;</button></li>`).join('') || '<li class="text-[10px] italic text-center p-4">No invites.</li>'}
+                        </ul>
+                    </div>
+                    <div id="users-tab" class="hidden">
+                        <ul class="space-y-2 max-h-80 overflow-auto">
+                            ${users.map(u => `
+                                <li class="flex flex-col p-3 bg-[var(--secondary-bg)] rounded-xl gap-2">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-[10px] font-bold truncate">${u.email}</span>
+                                        ${u.id !== currentUser.uid ? `<button data-userid="${u.id}" class="delete-user-btn text-red-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>` : '<span class="text-[9px] uppercase opacity-50 font-bold">You</span>'}
+                                    </div>
+                                    <select data-userid="${u.id}" class="user-role-select input-base p-1.5 rounded text-[10px] font-bold" ${u.id === currentUser.uid ? 'disabled' : ''}>
+                                        <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+                                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                    </select>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                </div>`;
+            
             userManagementModalEl.classList.remove('opacity-0', 'pointer-events-none');
             lucide.createIcons();
-        });
+            
+            userManagementModalEl.querySelector('#invite-user-form').onsubmit = handleInviteSubmit;
+            userManagementModalEl.querySelectorAll('.user-role-select').forEach(sel => {
+                sel.onchange = async (e) => {
+                    const uid = e.target.dataset.userid, role = e.target.value;
+                    try { await updateDoc(doc(db, "users", uid), { role }); } catch(err) { console.error(err); }
+                };
+            });
+        };
 
-        // --- Theme & Notification Panel ---
-        const initTheme = () => { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); };
-        themeSwitcher.addEventListener('click', () => { document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); });
-        notificationBtn.addEventListener('click', (e) => { e.stopPropagation(); notificationPanel.classList.toggle('hidden'); });
-        document.addEventListener('click', (e) => { if (!notificationPanel.contains(e.target) && !notificationBtn.contains(e.target)) notificationPanel.classList.add('hidden'); });
-        document.addEventListener('mousemove', (e) => {
-            document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
-            document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
-        });
+        async function handleInviteSubmit(e) {
+            e.preventDefault();
+            const form = e.target, status = form.querySelector('#invite-status'), email = form.inviteEmail.value, role = form.inviteRole.value;
+            try {
+                const existing = await getDoc(doc(db, "invites", email));
+                if (existing.exists()) throw new Error("Already invited.");
+                await setDoc(doc(db, "invites", email), { role, createdAt: serverTimestamp() });
+                status.textContent = 'Invite sent!'; status.className = 'text-green-500 mt-2 text-[10px] h-3';
+                form.reset();
+                setTimeout(() => manageUsersBtn.click(), 500);
+            } catch (err) { status.textContent = err.message; status.className = 'text-red-500 mt-2 text-[10px] h-3'; }
+        }
 
-        // --- Initial Load ---
-        initTheme();
+        if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
         lucide.createIcons();
     </script>
 </body>
 </html>
-
-
